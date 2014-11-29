@@ -25,6 +25,7 @@ namespace RoyalAssistant
             if (Game.MapId == GameMapId.CrystalScar || Game.MapId == GameMapId.HowlingAbyss || Game.MapId == GameMapId.TwistedTreeline)
             {
                 Console.WriteLine("RoyalAssistant: only SR support implemented!");
+				return;
             }
             Game.OnGameUpdate += Game_OnGameUpdate;
             Drawing.OnDraw += Drawing_OnDraw;
