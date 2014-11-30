@@ -235,7 +235,7 @@ namespace RoyalAkali
                     rektmate = default(Obj_AI_Hero);
                 }
             }
-            catch (Exception ex) { }
+            catch { }
             try
             {
                 if (rektmate == default(Obj_AI_Hero) && IsRapeble(possibleVictim) > possibleVictim.Health)
@@ -245,7 +245,7 @@ namespace RoyalAkali
                     //Console.WriteLine("Assign - " + rektmate.ChampionName + " time: " + assignTime+"\n\n");
                 }
             }
-            catch (Exception ex) { }
+            catch { }
             if (rektmate != default(Obj_AI_Hero))
             {
                 //!(menu.SubMenu("misc").Item("TowerDive").GetValue<Slider>().Value < player.Health/player.MaxHealth && Utility.UnderTurret(rektmate, true)) && 

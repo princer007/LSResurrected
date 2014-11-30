@@ -11,7 +11,7 @@ namespace RoyalAssistant
     class Program
     {
         static Menu menu;
-        static int[] SRExpCumulative = { 0, 280, 660, 1140, 1720, 2400, 3180, 4060, 5040, 6120, 730, 8580, 9960, 11440, 13020, 14700, 16480, 18360 };
+        static int[] SRExpCumulative = { 0, 280, 660, 1140, 1720, 2400, 3180, 4060, 5040, 6120, 7300, 8580, 9960, 11440, 13020, 14700, 16480, 18360 };
         static void Main(string[] args)
         {
             CustomEvents.Game.OnGameLoad += Game_OnGameLoad;
@@ -45,7 +45,7 @@ namespace RoyalAssistant
         private static void Drawing_OnDraw(EventArgs args)
         {
             foreach (Obj_AI_Hero hero in ObjectManager.Get<Obj_AI_Hero>())
-                if (hero.Level != 18 && !hero.IsMe && hero.IsVisible)
+                if (hero.Level != 18 && !hero.IsMe && hero.IsVisible && !hero.IsDead)
                 {   
                     Drawing.DrawLine(
                         new Vector2(hero.HPBarPosition.X+10, hero.HPBarPosition.Y + 42),
