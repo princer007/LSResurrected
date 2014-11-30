@@ -67,6 +67,11 @@ namespace RoyalAssistant
                             textXOffset = 6;
                             textYOffset = -2;
                         }
+						if(hero.IsAlly)
+						{
+							YOffset -= 2;
+							textYOffset -= 2;
+						}
                     }
                     else return;
                     Drawing.DrawLine(
