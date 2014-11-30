@@ -58,7 +58,7 @@ namespace RoyalAkali
             {
                 LoadMenu();
             }
-            catch (Exception ex)
+            catch
             {
                 Game.PrintChat("TS fucked up L#, loading without TS");
                 LoadMenu(false);
@@ -511,7 +511,7 @@ namespace RoyalAkali
         {
             Game.PrintChat("--------------------------------------------------------------------------------");
             WebClient client = new WebClient();
-            string version = client.DownloadString("https://raw.github.com/princer007/LeagueSharp/master/RoyalRapistAkali/version");
+            string version = client.DownloadString("https://raw.github.com/princer007/LSResurrected/master/RoyalRapistAkali/version");
             if (version.Remove(4).Equals(localVersion))
                 Game.PrintChat("== Your copy of Royal Rapist Akali is updated! GL & HF! ==");
             else
