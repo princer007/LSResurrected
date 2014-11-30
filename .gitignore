@@ -41,3 +41,8 @@ Icon
 Network Trash Folder
 Temporary Items
 .apdisk
+
+RoyalAssistant/bin/Release/RoyalAssistant.vshost.exe
+RoyalAssistant/bin/Release/SharpDX.Direct3D9.dll
+RoyalAssistant/bin/Release/SharpDX.dll
+RoyalAssistant/RoyalAssistant.suo
