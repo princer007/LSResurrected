@@ -13,6 +13,9 @@ namespace RoyalAssistant
     {
         static Menu menu;
         static int[] SRExpCumulative = { 0, 280, 660, 1140, 1720, 2400, 3180, 4060, 5040, 6120, 7300, 8580, 9960, 11440, 13020, 14700, 16480, 18360 };
+        static bool bought = false;
+        static System.Timers.Timer globalCooldown = new System.Timers.Timer();
+
         static void Main(string[] args)
         {
             CustomEvents.Game.OnGameLoad += OnGameLoad;
@@ -24,19 +27,37 @@ namespace RoyalAssistant
             
             if (Game.MapId != (GameMapId)11)
             {
-                Console.WriteLine("RoyalAssistant: only SR support implemented!");
+                Game.PrintChat("RoyalAssistant: only SR support implemented!");
 				return;
             }
 
+            Game.OnGameUpdate += OnUpdate;
             Drawing.OnDraw += Drawing_OnDraw;
             Game.OnGameEnd += OnGameEnd;
-            Console.WriteLine("RoyalAssistant Loaded!");
+            globalCooldown.Elapsed += new System.Timers.ElapsedEventHandler(OnTimerProcs);
+            Game.PrintChat("RoyalAssistant Loaded!");
+        }
+
+        static void OnUpdate(EventArgs args)
+        {
+            if (Utility.InShopRange() && menu.Item("ward").GetValue<bool>() && !HasWard())
+                if (menu.Item("buyward").GetValue<KeyBind>().Active && !bought)
+                {
+                    ObjectManager.Player.BuyItem(ItemId.Stealth_Ward);
+                    bought = true;
+                }
         }
 
         static void Drawing_OnDraw(EventArgs args)
         {
             if (Utility.InShopRange() && menu.Item("ward").GetValue<bool>() && !HasWard())
-                Drawing.DrawText(400, 600, GetColor(), "Buy a ward, save your life!");
+            {
+                Drawing.DrawText(menu.Item("center").GetValue<bool>() ? Drawing.Width / 2 - 40 : 200,
+                                  menu.Item("center").GetValue<bool>() ? Drawing.Height / 2 - 60 : 400, GetColor(),
+                                  "Buy a ward, save a life! (" + (char)menu.Item("buyward").GetValue<KeyBind>().Key + ")");
+                if(bought) Utility.DelayAction.Add(10, () => bought = false);
+            }
+
             foreach (Obj_AI_Hero hero in ObjectManager.Get<Obj_AI_Hero>())
                 if (hero.Level != 18 && hero.IsVisible && !hero.IsDead)
                 {
@@ -89,8 +110,18 @@ namespace RoyalAssistant
 
         static void OnGameEnd(EventArgs args)
         {
+            //Cause utility won't work after game ends ( -_-)
+            globalCooldown.Interval = menu.Item("delay").GetValue<Slider>().Value;
+            globalCooldown.Start();
+        }
+
+        static void OnTimerProcs(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            globalCooldown.Stop();
+            globalCooldown.Dispose();
             Process.GetProcessesByName("League of Legends")[0].Kill();
         }
+       
 
         static bool HasWard()
         {
@@ -153,9 +184,12 @@ namespace RoyalAssistant
             //menu.AddItem(new MenuItem("showSelfT", "Tracker showing self").SetValue(false));
             menu.AddItem(new MenuItem("showAlliesT", "Tracker showing allies").SetValue(true));
             menu.AddItem(new MenuItem("showEnemiesT", "Tracker showing enemies").SetValue(true));
-            menu.AddItem(new MenuItem("2", "                       Helper:"));
+            menu.AddItem(new MenuItem("2", "                        Helper:"));
             menu.AddItem(new MenuItem("end", "Quit game on end").SetValue(true));
+            menu.AddItem(new MenuItem("delay", "Custom delay to closing LoL").SetValue(new Slider(500, 0, 1500)));
             menu.AddItem(new MenuItem("ward", "Show \"Buy ward\" reminder").SetValue(true));
+            menu.AddItem(new MenuItem("center", "^ Place this message on center ^").SetValue(false));
+            menu.AddItem(new MenuItem("buyward", "Buy ward key").SetValue(new KeyBind('U', KeyBindType.Press)));
             menu.AddToMainMenu();
             Console.WriteLine("Menu finalized");
         }
