@@ -19,7 +19,8 @@ namespace RoyalAsheHelper
         {
             CustomEvents.Game.OnGameLoad += Game_OnGameLoad;
         }
-        private static void Game_OnGameLoad(EventArgs args)
+
+        static void Game_OnGameLoad(EventArgs args)
         {
             if (player.ChampionName != champName) return;
             Q = new Spell(SpellSlot.Q);
@@ -28,25 +29,48 @@ namespace RoyalAsheHelper
             W.SetSkillshot(0.5f, (float)WAngle, 2000f, false, SkillshotType.SkillshotCone);
             R.SetSkillshot(0.3f, 250f, 1600f, false, SkillshotType.SkillshotLine);
             LoadMenu();
-            Game.OnGameSendPacket += OnSendPacket;
+            //Game.OnGameSendPacket += OnSendPacket;
             Game.OnGameUpdate += Game_OnGameUpdate;
             AntiGapcloser.OnEnemyGapcloser += AntiGapcloser_OnEnemyGapcloser;
             Interrupter.OnPossibleToInterrupt += Interrupter_OnPossibleToInterrupt;
+            Orbwalking.AfterAttack += AfterAttack;
+            Orbwalking.BeforeAttack += BeforeAttack;
             Game.PrintChat("RoyalAsheHelper loaded!");
         }
-        private static void AntiGapcloser_OnEnemyGapcloser(ActiveGapcloser gapcloser)
+
+        static void AfterAttack(Obj_AI_Base unit, Obj_AI_Base target)
+        {
+            if (menu.Item("exploit").GetValue<bool>() && menu.Item("UseQ").GetValue<bool>())
+                foreach (BuffInstance buff in player.Buffs)
+                    if (buff.Name == "FrostShot") Q.Cast();
+        }
+
+        static void BeforeAttack(Orbwalking.BeforeAttackEventArgs args)
+        {
+            if (menu.Item("UseQ").GetValue<bool>())
+                if (args.Target.Type == GameObjectType.obj_AI_Hero)
+                {
+                    foreach (BuffInstance buff in player.Buffs)
+                        if (buff.Name == "FrostShot") return;
+                    Q.Cast();
+                }
+                else
+                {
+                    foreach (BuffInstance buff in player.Buffs)
+                        if (buff.Name == "FrostShot") Q.Cast();
+                    
+                }
+        }
+
+        static void AntiGapcloser_OnEnemyGapcloser(ActiveGapcloser gapcloser)
         {
             if (R.IsReady() && menu.SubMenu("misc").Item("antigapcloser").GetValue<bool>() && Vector3.Distance(gapcloser.Sender.Position, player.Position) < 1000)
             {
                 R.Cast(gapcloser.End, true);
             }
         }
-        /// <summary>
-        /// Interruptor
-        /// </summary>
-        /// <param name="unit">Unit that causing interruptable spell</param>
-        /// <param name="spell">Spell that can be interrupted</param>
-        private static void Interrupter_OnPossibleToInterrupt(Obj_AI_Base unit, InterruptableSpell spell)
+
+        static void Interrupter_OnPossibleToInterrupt(Obj_AI_Base unit, InterruptableSpell spell)
         {
             if (R.IsReady() &&
                 Vector3.Distance(player.Position, unit.Position) < 1000 &&
@@ -56,7 +80,8 @@ namespace RoyalAsheHelper
                 R.Cast(unit.Position, true);
             }
         }
-        private static void Game_OnGameUpdate(EventArgs args)
+
+        static void Game_OnGameUpdate(EventArgs args)
         {
             // Combo
             if (SOW.ActiveMode == Orbwalking.OrbwalkingMode.Combo)
@@ -66,7 +91,8 @@ namespace RoyalAsheHelper
             if (SOW.ActiveMode == Orbwalking.OrbwalkingMode.Mixed)
                 Harass();
         }
-        private static void Combo()
+        
+        static void Combo()
         {
             bool useW = W.IsReady() && menu.SubMenu("combo").Item("UseW").GetValue<bool>();
             bool useR = R.IsReady() && menu.SubMenu("combo").Item("UseR").GetValue<bool>();
@@ -81,7 +107,8 @@ namespace RoyalAsheHelper
                 R.CastIfHitchanceEquals(targetR, HitChance.High);
             }
         }
-        private static void Harass()
+        
+        static void Harass()
         {
             bool useW = W.IsReady() && menu.SubMenu("harass").Item("UseW").GetValue<bool>();
             Obj_AI_Hero targetW = SimpleTs.GetTarget(W.Range, SimpleTs.DamageType.Physical);
@@ -90,7 +117,8 @@ namespace RoyalAsheHelper
                 W.CastIfHitchanceEquals(targetW, HitChance.Medium);
             }
         }
-        private static void OnSendPacket(GamePacketEventArgs args)
+        
+        static void OnSendPacket(GamePacketEventArgs args)
         {
             if (!menu.SubMenu("combo").Item("UseQ").GetValue<bool>()) return;
             if (args.PacketData[0] == Packet.C2S.Move.Header && Packet.C2S.Move.Decoded(args.PacketData).SourceNetworkId == player.NetworkId && Packet.C2S.Move.Decoded(args.PacketData).MoveType == 3)
@@ -114,7 +142,8 @@ namespace RoyalAsheHelper
                 }
             }
         }
-        private static void LoadMenu()
+        
+        static void LoadMenu()
         {
             // Initialize the menu
             menu = new Menu(champName, champName, true);
@@ -144,6 +173,7 @@ namespace RoyalAsheHelper
             Menu misc = new Menu("Misc", "misc");
             menu.AddSubMenu(misc);
             misc.AddItem(new MenuItem("interrupt", "Interrupt spells").SetValue(true));
+            misc.AddItem(new MenuItem("exploit", "Q exploit").SetValue(false));
             //misc.AddItem(new MenuItem("interruptLevel", "Interrupt only with danger level").SetValue<InterruptableDangerLevel>(InterruptableDangerLevel.Medium));
             misc.AddItem(new MenuItem("antigapcloser", "Anti-Gapscloser").SetValue(true));
 

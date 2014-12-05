@@ -50,3 +50,9 @@ RoyalAssistant/bin/Release/RoyalAssistant.vshost.exe.config
 RoyalAssistant/bin/Release/RoyalAssistant.vshost.exe.manifest
 RoyalAssistant/RoyalAssistant.suo
 RoyalAssistant/RoyalAssistant.suo
+RoyalAsheHelper/bin/Release/RoyalAsheHelper.vshost.exe
+RoyalAsheHelper/bin/Release/RoyalAsheHelper.vshost.exe.manifest
+RoyalAsheHelper/bin/Release/SharpDX.Direct3D9.dll
+RoyalAsheHelper/bin/Release/SharpDX.dll
+RoyalAsheHelper/bin/Release/SharpDX.Toolkit.dll
+RoyalAsheHelper/bin/Release/SharpDX.Toolkit.xml
