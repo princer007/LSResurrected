@@ -146,7 +146,7 @@ namespace RoyalAsheHelper
         static void LoadMenu()
         {
             // Initialize the menu
-            menu = new Menu(champName, champName, true);
+            menu = new Menu("Royal Ashe Helper", champName, true);
 
             // Target selector
             Menu targetSelector = new Menu("Target Selector", "ts");
