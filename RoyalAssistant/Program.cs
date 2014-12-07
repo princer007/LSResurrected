@@ -34,6 +34,7 @@ namespace RoyalAssistant
             Game.OnGameUpdate += OnUpdate;
             Drawing.OnDraw += Drawing_OnDraw;
             Game.OnGameEnd += OnGameEnd;
+            Obj_AI_Hero.OnProcessSpellCast += OnSpellCast;
             globalCooldown.Elapsed += new System.Timers.ElapsedEventHandler(OnTimerProcs);
             Game.PrintChat("RoyalAssistant Loaded!");
         }
@@ -46,6 +47,12 @@ namespace RoyalAssistant
                     ObjectManager.Player.BuyItem(ItemId.Stealth_Ward);
                     bought = true;
                 }
+        }
+         
+        static void OnSpellCast(LeagueSharp.Obj_AI_Base sender, LeagueSharp.GameObjectProcessSpellCastEventArgs args)
+        {
+            if (args.SData.Name != "NocturneParanoia2" || !menu.Item("noct").GetValue<bool>()) return;
+            Packet.S2C.Ping.Encoded(new Packet.S2C.Ping.Struct(args.Target.Position.X, args.Target.Position.Y, args.Target.NetworkId, 0, Packet.PingType.Danger)).Process();
         }
 
         static void Drawing_OnDraw(EventArgs args)
@@ -137,39 +144,27 @@ namespace RoyalAssistant
             {
                 case 0:
                     return Color.IndianRed;
-                    break;
                 case 1:
                     return Color.LightGoldenrodYellow;
-                    break;
                 case 2:
                     return Color.Goldenrod;
-                    break;
                 case 3:
                     return Color.Green;
-                    break;
                 case 4:
                     return Color.Blue;
-                    break;
                 case 5:
                     return Color.Violet;
-                    break;
                 case 6:
                     return Color.DeepPink;
-                    break;
                 case 7:
                     return Color.DeepSkyBlue;
-                    break;
                 case 8:
                     return Color.White;
-                    break;
                 case 9:
                     return Color.Cyan;
-                    break;
                 default:
                     return Color.ForestGreen;
-                    break;
             }
-            return Color.Black;
         }
 
         static void LoadMenu()
@@ -190,6 +185,7 @@ namespace RoyalAssistant
             menu.AddItem(new MenuItem("ward", "Show \"Buy ward\" reminder").SetValue(true));
             menu.AddItem(new MenuItem("center", "^ Place this message on center ^").SetValue(false));
             menu.AddItem(new MenuItem("buyward", "Buy ward key").SetValue(new KeyBind('U', KeyBindType.Press)));
+            menu.AddItem(new MenuItem("noct", "Show Nocturne's ulti target").SetValue(true));
             menu.AddToMainMenu();
             Console.WriteLine("Menu finalized");
         }

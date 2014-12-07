@@ -34,7 +34,13 @@ namespace RoyalAsheHelper
             Game.OnGameUpdate += Game_OnGameUpdate;
             //AntiGapcloser.OnEnemyGapcloser += AntiGapcloser_OnEnemyGapcloser;
             Interrupter.OnPossibleToInterrupt += Interrupter_OnPossibleToInterrupt;
+            Orbwalking.BeforeAttack += BeforeAttack;
             Game.PrintChat("RoyalSongOfSona loaded!");
+        }
+
+        static void BeforeAttack(LeagueSharp.Common.Orbwalking.BeforeAttackEventArgs args)
+        {
+            if (args.Target.IsMinion && !menu.Item("aa").GetValue<bool>()) args.Process = false;
         }
 
         static void AntiGapcloser_OnEnemyGapcloser(ActiveGapcloser gapcloser)
@@ -220,6 +226,7 @@ namespace RoyalAsheHelper
             Menu misc = new Menu("Misc", "misc");
             menu.AddSubMenu(misc);
             misc.AddItem(new MenuItem("interrupt", "Interrupt spells").SetValue(true));
+            misc.AddItem(new MenuItem("aa", "AA minions").SetValue(false));
             misc.AddItem(new MenuItem("exhaust", "Exhaust if not possible to inperrupt").SetValue(true));
             misc.AddItem(new MenuItem("packets", "Packet cast").SetValue(true));
             misc.AddItem(new MenuItem("panic", "Panic ult key").SetValue(new KeyBind('T', KeyBindType.Press)));
