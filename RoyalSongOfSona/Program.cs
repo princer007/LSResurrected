@@ -80,7 +80,9 @@ namespace RoyalAsheHelper
         static void Game_OnGameUpdate(EventArgs args)
         {
             if (menu.Item("panic").GetValue<KeyBind>().Active)
-                R.Cast(SimpleTs.GetTarget(R.Range, SimpleTs.DamageType.Magical), packets);
+            {
+                R.Cast(R.GetPrediction(SimpleTs.GetTarget(R.Range, SimpleTs.DamageType.Magical)).CastPosition, packets);
+            }
 
             // Combo
             if (SOW.ActiveMode == Orbwalking.OrbwalkingMode.Combo)
