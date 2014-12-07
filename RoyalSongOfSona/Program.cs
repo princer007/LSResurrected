@@ -59,6 +59,7 @@ namespace RoyalAsheHelper
             else
             {
                 if (!menu.Item("exhaust").GetValue<bool>()) return;
+				if(unit.Distance(player.Position) > 600) return;
                 if (player.GetSpellSlot("SummonerExhaust") != null && player.SummonerSpellbook.CanUseSpell(player.GetSpellSlot("SummonerExhaust")) == SpellState.Ready)
                     player.SummonerSpellbook.CastSpell(player.GetSpellSlot("SummonerExhaust"), unit);
                 if ((W.IsReady() && GetPassiveCount() == 2) || (Utility.HasBuff(player, "sonapassiveattack") && player.LastCastedSpellName() == "SonaW") || (Utility.HasBuff(player, "sonapassiveattack") && W.IsReady()))
