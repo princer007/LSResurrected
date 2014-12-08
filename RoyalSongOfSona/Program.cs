@@ -1,4 +1,6 @@
 using System;
+using System.Linq;
+using System.Collections.Generic;
 using LeagueSharp;
 using LeagueSharp.Common;
 using SharpDX;
@@ -12,6 +14,7 @@ namespace RoyalAsheHelper
         private static Orbwalking.Orbwalker SOW;
         private static Menu menu;
         private static bool packets { get { return menu.Item("packets").GetValue<bool>(); } }
+        private static List<BuffType> CcTypes = new List<BuffType> { BuffType.Fear, BuffType.Polymorph, BuffType.Snare, BuffType.Stun, BuffType.Suppression, BuffType.Taunt, BuffType.Charm };
         
         static void Main(string[] args)
         {
@@ -34,18 +37,33 @@ namespace RoyalAsheHelper
             Game.OnGameUpdate += Game_OnGameUpdate;
             //AntiGapcloser.OnEnemyGapcloser += AntiGapcloser_OnEnemyGapcloser;
             Interrupter.OnPossibleToInterrupt += Interrupter_OnPossibleToInterrupt;
+            Drawing.OnDraw += OnDraw;
             Orbwalking.BeforeAttack += BeforeAttack;
             Game.PrintChat("RoyalSongOfSona loaded!");
         }
 
+        static void OnDraw(EventArgs args)
+        {
+            //Hardcoding
+            if (menu.Item("DrawQ").GetValue<Circle>().Active)
+                Utility.DrawCircle(player.Position, menu.Item("QRange").GetValue<Slider>().Value, menu.Item("DrawQ").GetValue<Circle>().Color);
+            if (menu.Item("DrawW").GetValue<Circle>().Active)
+                Utility.DrawCircle(player.Position, W.Range, menu.Item("DrawW").GetValue<Circle>().Color);
+            if (menu.Item("DrawE").GetValue<Circle>().Active)
+                Utility.DrawCircle(player.Position, E.Range, menu.Item("DrawE").GetValue<Circle>().Color);
+            if (menu.Item("DrawR").GetValue<Circle>().Active)
+                Utility.DrawCircle(player.Position, R.Range, menu.Item("DrawR").GetValue<Circle>().Color);
+        }
+
         static void BeforeAttack(LeagueSharp.Common.Orbwalking.BeforeAttackEventArgs args)
         {
-            if (args.Target.IsMinion && !menu.Item("aa").GetValue<bool>()) args.Process = false;
+            if (args.Target.IsMinion && menu.Item("aa").GetValue<bool>() && AlliesInRange(800) > 0) args.Process = false;
         }
 
         static void AntiGapcloser_OnEnemyGapcloser(ActiveGapcloser gapcloser)
         {
-
+            if (!menu.Item("gapclose").GetValue<bool>() || !E.IsReady()) return;
+            E.Cast();
         }
 
         static void Interrupter_OnPossibleToInterrupt(Obj_AI_Base unit, InterruptableSpell spell)
@@ -80,9 +98,10 @@ namespace RoyalAsheHelper
         static void Game_OnGameUpdate(EventArgs args)
         {
             if (menu.Item("panic").GetValue<KeyBind>().Active)
-            {
                 R.Cast(R.GetPrediction(SimpleTs.GetTarget(R.Range, SimpleTs.DamageType.Magical)).CastPosition, packets);
-            }
+
+            if (menu.Item("cleanse").GetValue<bool>())
+                CCRemove();
 
             // Combo
             if (SOW.ActiveMode == Orbwalking.OrbwalkingMode.Combo)
@@ -105,7 +124,7 @@ namespace RoyalAsheHelper
                 if (item.Id == ItemId.Frost_Queens_Claim && player.Spellbook.CanUseSpell((SpellSlot)item.Slot) == SpellState.Ready)
                     item.UseItem(targetQ);
 
-            if (useQ && targetQ != null && Q.InRange(targetQ.Position))
+            if (useQ && targetQ != null && targetQ.Distance(player) < menu.Item("QRange").GetValue<Slider>().Value)
                 Q.Cast();
 
             if (useW)
@@ -122,7 +141,7 @@ namespace RoyalAsheHelper
             bool useQ = Q.IsReady() && menu.Item("UseQH").GetValue<bool>();
             bool useW = W.IsReady() && menu.Item("UseWH").GetValue<bool>();
             Obj_AI_Hero targetQ = SimpleTs.GetTarget(Q.Range, SimpleTs.DamageType.Magical);
-            if (useQ && targetQ != null && Utility.CountEnemysInRange((int)Q.Range) > 1)
+            if (useQ && targetQ != null && (Utility.CountEnemysInRange((int)Q.Range) > 1 || !menu.Item("UseQHF").GetValue<bool>()))
                 Q.Cast();
 
             if (useW)
@@ -181,6 +200,17 @@ namespace RoyalAsheHelper
             return temp;
         }
 
+        static void CCRemove()
+        {
+            //The best way to do it it's LINQ...
+            //Realization taken from h3h3's Support AIO
+            if (!Items.HasItem((int)ItemId.Mikaels_Crucible, player) || !Items.CanUseItem((int)ItemId.Mikaels_Crucible) || Utility.CountEnemysInRange(1000) < 1) return;
+            foreach (var hero in ObjectManager.Get<Obj_AI_Hero>().Where(h => h.IsAlly && !h.IsDead && h.Distance(player) <= 800).OrderByDescending(h => h.FlatPhysicalDamageMod))
+                foreach (var buff in CcTypes)
+                    if (hero.HasBuffOfType(buff))
+                        Items.UseItem((int)ItemId.Mikaels_Crucible, hero);
+        }
+
         static int AlliesInRange(float range)
         {
             int count = 0;
@@ -208,6 +238,7 @@ namespace RoyalAsheHelper
             Menu combo = new Menu("Combo", "combo");
             menu.AddSubMenu(combo);
             combo.AddItem(new MenuItem("UseQC", "Use Q").SetValue(true));
+            combo.AddItem(new MenuItem("QRange", "Use Q on range").SetValue(new Slider(850, 500, 850)));//Pointless, but you asked for it
             combo.AddItem(new MenuItem("UseWC", "Use W").SetValue(true));
             combo.AddItem(new MenuItem("UseEC", "Use E (smart)").SetValue(true));
             combo.AddItem(new MenuItem("UseRC", "Use R").SetValue(true));
@@ -217,6 +248,7 @@ namespace RoyalAsheHelper
             Menu harass = new Menu("Harass", "harass");
             menu.AddSubMenu(harass);
             harass.AddItem(new MenuItem("UseQH", "Use Q").SetValue(true));
+            harass.AddItem(new MenuItem("UseQHF", "Q only 2 or more enemies").SetValue(true));
             harass.AddItem(new MenuItem("UseWH", "Use W").SetValue(true));
 
             Menu heal = new Menu("Heal options", "heal");
@@ -224,15 +256,24 @@ namespace RoyalAsheHelper
             heal.AddItem(new MenuItem("healC", "Heal only when ally with hp < x%").SetValue(new Slider(60, 5, 100)));
             heal.AddItem(new MenuItem("healN", "Heal only when № of allies in range").SetValue(new Slider(1, 0, 4)));
             heal.AddItem(new MenuItem("healmC", "Heal yourself anyway").SetValue(true));
-            heal.AddItem(new MenuItem("healmC2", "^ ON: Fill HP | Same as for others :OFF").SetValue(true));
+            heal.AddItem(new MenuItem("healmC2", "^ ON: Fill HP | Same as for others :OFF").SetValue(false));
 
             Menu misc = new Menu("Misc", "misc");
             menu.AddSubMenu(misc);
+            misc.AddItem(new MenuItem("gapclose", "Auto E on enemy gapclose").SetValue(false));
             misc.AddItem(new MenuItem("interrupt", "Interrupt spells").SetValue(true));
-            misc.AddItem(new MenuItem("aa", "AA minions").SetValue(false));
+            misc.AddItem(new MenuItem("aa", "AA minions only when no allies nearby").SetValue(true));
             misc.AddItem(new MenuItem("exhaust", "Exhaust if not possible to inperrupt").SetValue(true));
+            misc.AddItem(new MenuItem("cleanse", "Use Mikaels").SetValue(true)); //DONE
             misc.AddItem(new MenuItem("packets", "Packet cast").SetValue(true));
             misc.AddItem(new MenuItem("panic", "Panic ult key").SetValue(new KeyBind('T', KeyBindType.Press)));
+
+            Menu drawings = new Menu("Drawings", "drawings");
+            menu.AddSubMenu(drawings);
+            drawings.AddItem(new MenuItem("DrawQ", "Draw Q range").SetValue(new Circle(true, System.Drawing.Color.Cyan, Q.Range)));
+            drawings.AddItem(new MenuItem("DrawW", "Draw W range").SetValue(new Circle(true, System.Drawing.Color.ForestGreen, W.Range)));
+            drawings.AddItem(new MenuItem("DrawE", "Draw E range").SetValue(new Circle(true, System.Drawing.Color.DeepPink, E.Range)));
+            drawings.AddItem(new MenuItem("DrawR", "Draw R range").SetValue(new Circle(true, System.Drawing.Color.Gold, R.Range)));
 
             // Finalize menu
             menu.AddToMainMenu();
