@@ -3,6 +3,7 @@ using LeagueSharp;
 using LeagueSharp.Common;
 using System.Collections.Generic;
 using System.Diagnostics;
+using SKYPE4COMLib;
 using SharpDX;
 
 using Color = System.Drawing.Color;
@@ -15,20 +16,23 @@ namespace RoyalAssistant
         static int[] SRExpCumulative = { 0, 280, 660, 1140, 1720, 2400, 3180, 4060, 5040, 6120, 7300, 8580, 9960, 11440, 13020, 14700, 16480, 18360 };
         static bool bought = false;
         static System.Timers.Timer globalCooldown = new System.Timers.Timer();
+        static Skype skype = new Skype();
+        static string lastSender = "";
 
         static void Main(string[] args)
         {
             CustomEvents.Game.OnGameLoad += OnGameLoad;
+            skype.Attach(8);
         }
 
         static void OnGameLoad(EventArgs args)
         {
             LoadMenu();
-            
+
             if (Game.MapId != (GameMapId)11)
             {
                 Game.PrintChat("RoyalAssistant: only SR support implemented!");
-				return;
+                return;
             }
 
             Game.OnGameUpdate += OnUpdate;
@@ -36,6 +40,10 @@ namespace RoyalAssistant
             Game.OnGameEnd += OnGameEnd;
             Obj_AI_Hero.OnProcessSpellCast += OnSpellCast;
             globalCooldown.Elapsed += new System.Timers.ElapsedEventHandler(OnTimerProcs);
+
+            skype.MessageStatus += new _ISkypeEvents_MessageStatusEventHandler(MessageStatus);
+            Game.OnGameInput += OnGameInput;
+
             Game.PrintChat("RoyalAssistant Loaded!");
         }
 
@@ -167,25 +175,52 @@ namespace RoyalAssistant
             }
         }
 
+        static void MessageStatus(ChatMessage msg, TChatMessageStatus status)
+        {
+            if (skype.CurrentUserStatus == TUserStatus.cusDoNotDisturb && !menu.Item("skypeShowDND").GetValue<bool>() || !menu.Item("skypeAttach").GetValue<bool>()) return;
+            Game.PrintChat("<font color='#70DBDB'>Skype - " + (msg.Sender.DisplayName == "" ? msg.Sender.FullName : msg.Sender.DisplayName) + ":</font> <font color='#FFFFFF'>" + msg.Body + "</font>");
+            lastSender = msg.Sender.Handle;
+        }
+        static void OnGameInput(GameInputEventArgs args)
+        {
+            if (!menu.Item("skypeAttach").GetValue<bool>() || !args.Input.StartsWith("/s")) return;
+            if (lastSender.Equals(""))
+            {
+                Game.PrintChat("<font color='#70DBDB'>Skype - Error:</font> <font color='#FFFFFF'>Can't answer, no sender</font>");
+                return;
+            }
+            skype.SendMessage(lastSender, args.Input.Remove(0, 3));
+            Game.PrintChat("<font color='#70DBDB'>Skype - " + (skype.User.DisplayName.Equals("") ? skype.User.FullName : skype.User.DisplayName) + ":</font> <font color='#FFFFFF'>" + args.Input.Remove(0, 3) + "</font>");
+            args.Process = false;
+        }
         static void LoadMenu()
         {
             // Initialize the menu
             menu = new Menu("RoyalAssistant", "RoyalAssistant", true);
-            menu.AddItem(new MenuItem("showSelf", "Show your XP bar").SetValue(false));
-            menu.AddItem(new MenuItem("showAllies", "Show allies XP bar").SetValue(true));
-            menu.AddItem(new MenuItem("showEnemies", "Show enemies XP bar").SetValue(true));
-            menu.AddItem(new MenuItem("text", "Draw XP count").SetValue(true));
-            menu.AddItem(new MenuItem("1", "                  Tracker settings:"));
+
+            menu.AddSubMenu(new Menu("Exp tracker", "track"));
+            menu.SubMenu("track").AddItem(new MenuItem("showSelf", "Show your XP bar").SetValue(false));
+            menu.SubMenu("track").AddItem(new MenuItem("showAllies", "Show allies XP bar").SetValue(true));
+            menu.SubMenu("track").AddItem(new MenuItem("showEnemies", "Show enemies XP bar").SetValue(true));
+            menu.SubMenu("track").AddItem(new MenuItem("text", "Draw XP count").SetValue(true));
+            menu.SubMenu("track").AddItem(new MenuItem("1", "                  Tracker settings:"));
             //menu.AddItem(new MenuItem("showSelfT", "Tracker showing self").SetValue(false));
-            menu.AddItem(new MenuItem("showAlliesT", "Tracker showing allies").SetValue(true));
-            menu.AddItem(new MenuItem("showEnemiesT", "Tracker showing enemies").SetValue(true));
-            menu.AddItem(new MenuItem("2", "                        Helper:"));
-            menu.AddItem(new MenuItem("end", "Quit game on end").SetValue(true));
-            menu.AddItem(new MenuItem("delay", "Custom delay to closing LoL").SetValue(new Slider(500, 0, 1500)));
-            menu.AddItem(new MenuItem("ward", "Show \"Buy ward\" reminder").SetValue(true));
-            menu.AddItem(new MenuItem("center", "^ Place this message on center ^").SetValue(false));
-            menu.AddItem(new MenuItem("buyward", "Buy ward key").SetValue(new KeyBind('U', KeyBindType.Press)));
-            menu.AddItem(new MenuItem("noct", "Show Nocturne's ulti target").SetValue(true));
+            menu.SubMenu("track").AddItem(new MenuItem("showAlliesT", "Tracker showing allies").SetValue(true));
+            menu.SubMenu("track").AddItem(new MenuItem("showEnemiesT", "Tracker showing enemies").SetValue(true));
+
+            menu.AddSubMenu(new Menu("Utilities", "util"));
+            menu.SubMenu("util").AddItem(new MenuItem("end", "Quit game on end").SetValue(true));
+            menu.SubMenu("util").AddItem(new MenuItem("delay", "Custom delay to closing LoL").SetValue(new Slider(500, 0, 1500)));
+            menu.SubMenu("util").AddItem(new MenuItem("ward", "Show \"Buy ward\" reminder").SetValue(true));
+            menu.SubMenu("util").AddItem(new MenuItem("center", "^ Place this message on center ^").SetValue(false));
+            menu.SubMenu("util").AddItem(new MenuItem("buyward", "Buy ward key").SetValue(new KeyBind('U', KeyBindType.Press)));
+            menu.SubMenu("util").AddItem(new MenuItem("noct", "Show Nocturne's ulti target").SetValue(true));
+
+            menu.AddSubMenu(new Menu("Skype", "skyp"));
+            menu.SubMenu("skyp").AddItem(new MenuItem("skypeAttach", "Enable Skype").SetValue(true));
+            menu.SubMenu("skyp").AddItem(new MenuItem("skypeShowDND", "Show messages in DND mode").SetValue(true));
+            menu.SubMenu("skyp").AddItem(new MenuItem("", "Answer with command: /s TEXT"));
+
             menu.AddToMainMenu();
             Console.WriteLine("Menu finalized");
         }
