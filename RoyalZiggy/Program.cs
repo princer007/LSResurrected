@@ -18,25 +18,26 @@ namespace Ziggs
 {
     class Program
     {
-        private static readonly string champName = "Ziggs";                 //Ziggy
-        private static readonly Obj_AI_Hero player = ObjectManager.Player;  //Player object
-        private static Spell Q1, Q2, Q3, W, E, R;                           //Spells
-        private static bool DOTReady, igniteCheck = false;  //Ignite, has ignite, does W exist
-        private enum beingFocusedModes { NONE, TURRET, CHAMPION };        //Being focused by
-        private enum escapeModes { TOMOUSE, FROMTURRET }       //Escape to mouse, escape away from turret
-        private enum WModes { NONE, INTERRUPTOR, ANTIGAPCLOSER, ESCAPE, COMBAT }            //Modes of second W cast
-        private static beingFocusedModes beingFocusedBy;
-        private static escapeModes escapeMode;
-        private static WModes Wmode;
-        private static Vector3 escapePos,  wPos;                      //Position to escape from focus, TurretUnitPosition, Explosive( W ) position
-        private static TUnit TUnit_obj = new TUnit();
-        private static string wObj = "ZiggsW_mis_ground.troy";              //Well, W object, as is
-        private static Menu menu;                                           //Menu! (@_@ )
-        private static Orbwalking.Orbwalker SOW;                            //SOW! (^_^ )
-        private static List<Spell> SpellList = new List<Spell>();
-        private static Items.Item DFG = new Items.Item(3128, 750);          //DFG!!!!!!
-        private static List<FEnemy> lastTimePinged = new List<FEnemy>();
-        private static float lastQ = 0f;
+        static readonly string champName = "Ziggs";                 //Ziggy
+        static readonly Obj_AI_Hero player = ObjectManager.Player;  //Player object
+        static Spell Q1, Q2, Q3, W, E, R;                           //Spells
+        static bool DOTReady, igniteCheck = false;  //Ignite, has ignite, does W exist
+        enum beingFocusedModes { NONE, TURRET, CHAMPION };        //Being focused by
+        enum escapeModes { TOMOUSE, FROMTURRET }       //Escape to mouse, escape away from turret
+        enum WModes { NONE, INTERRUPTOR, ANTIGAPCLOSER, ESCAPE, COMBAT }            //Modes of second W cast
+        static beingFocusedModes beingFocusedBy;
+        static escapeModes escapeMode;
+        static WModes Wmode;
+        static Vector3 escapePos,  wPos;                      //Position to escape from focus, TurretUnitPosition, Explosive( W ) position
+        static TUnit TUnit_obj = new TUnit();
+        static string wObj = "ZiggsW_mis_ground.troy";              //Well, W object, as is
+        static Menu menu;                                           //Menu! (@_@ )
+        static Orbwalking.Orbwalker SOW;                            //SOW! (^_^ )
+        static List<Spell> SpellList = new List<Spell>();
+        static Items.Item DFG = new Items.Item(3128, 750);          //DFG!!!!!!
+        static List<FEnemy> lastTimePinged = new List<FEnemy>();
+		static SpellSlot IgniteSlot = player.GetSpellSlot("SummonerDot");
+        static float lastQ = 0f;
         
         //(?)List of damage sources to calc
         private static readonly List<Tuple<SpellSlot, int>> mainCombo = new List<Tuple<SpellSlot, int>>();
@@ -49,7 +50,7 @@ namespace Ziggs
         /// OnGameLoad callback. Executes on loading game
         /// </summary>
         /// <param name="args"></param>
-        private static void Game_OnGameLoad(EventArgs args)
+        static void Game_OnGameLoad(EventArgs args)
         {
             if (player.ChampionName != champName) return;                   //Champion validation
             //Spell init
@@ -69,12 +70,7 @@ namespace Ziggs
             SpellList.AddRange(new[] { Q3, W, E });
             //Ignite
             var ignite = player.Spellbook.GetSpell(player.GetSpellSlot("SummonerDot"));
-            if (ignite != null && ignite.Slot != SpellSlot.Unknown)
-            {
-                DOTReady = true;
-                igniteCheck = true;
-                mainCombo.Add(Tuple.Create(player.GetSpellSlot("SummonerDot"), 0));
-            }
+            
             //Combo settings
             mainCombo.Add(Tuple.Create(SpellSlot.Q, 0));
             mainCombo.Add(Tuple.Create(SpellSlot.W, 0));
@@ -104,7 +100,7 @@ namespace Ziggs
             Game.OnGameProcessPacket += OnRecievePacket;
             Console.WriteLine("Loaded!");
         }
-        private static void OnRecievePacket(GamePacketEventArgs args)
+        static void OnRecievePacket(GamePacketEventArgs args)
         {
             if (PacketChannel.S2C == args.Channel && args.PacketData[0] == Packet.S2C.TowerAggro.Header)//Header checks
             {
@@ -115,7 +111,7 @@ namespace Ziggs
                 TUnit_obj.isAggred = true;
             }
         }
-        private static void Game_OnGameUpdate(EventArgs args)
+        static void Game_OnGameUpdate(EventArgs args)
         {
             // Combo
             if (menu.SubMenu("combo").Item("Active").GetValue<KeyBind>().Active)
@@ -135,20 +131,16 @@ namespace Ziggs
                 else
                     Escape(escapeModes.TOMOUSE);
             if (Game.Time - 8 > TUnit_obj.LastAggroTime) TUnit_obj.isAggred = false;//Ye, my awful english.
-            if (player.Spellbook.GetSpell(player.GetSpellSlot("SummonerDot")).Cooldown <= 0)//???WTF am i doing? Who knows what can it return!
-                igniteCheck = true;
-            else
-                igniteCheck = false;
             WExploder();
         }
-        private static void GO_OnCreate(LeagueSharp.GameObject GO, EventArgs args)
+        static void GO_OnCreate(LeagueSharp.GameObject GO, EventArgs args)
         {
             if (GO.Name == wObj)
             {
                 wPos = GO.Position;
             }
         }
-        private static void GO_OnRemove(LeagueSharp.GameObject GO, EventArgs args)
+        static void GO_OnRemove(LeagueSharp.GameObject GO, EventArgs args)
         {
             if (GO.Name == wObj)
             {
@@ -156,16 +148,14 @@ namespace Ziggs
                 Wmode = WModes.NONE;
             }
         }
-        private static void Drawing_OnDraw(EventArgs args)
+        static void Drawing_OnDraw(EventArgs args)
         {
             //Draw the ranges of the spells. Ty Honda, stolen from your code :P
             foreach (var spell in SpellList)
             {
                 var menuItem = menu.Item(spell.Slot + "range").GetValue<Circle>();
                 if (menuItem.Active)
-                {
                     Utility.DrawCircle(player.Position, spell.Range, menuItem.Color);
-                }
             }
             foreach (Obj_AI_Hero hero in ObjectManager.Get<Obj_AI_Hero>())
             {
@@ -185,7 +175,7 @@ namespace Ziggs
                 }
             }
         }
-        private static void AntiGapcloser_OnEnemyGapcloser(ActiveGapcloser gapcloser)
+        static void AntiGapcloser_OnEnemyGapcloser(ActiveGapcloser gapcloser)
         {
             if (W.IsReady() && menu.SubMenu("misc").Item("antigapcloser").GetValue<bool>())
             {
@@ -201,7 +191,7 @@ namespace Ziggs
         /// </summary>
         /// <param name="unit">Unit that causing interruptable spell</param>
         /// <param name="spell">Spell that can be interrupted</param>
-        private static void Interrupter_OnPossibleToInterrupt(Obj_AI_Base unit, InterruptableSpell spell)
+        static void Interrupter_OnPossibleToInterrupt(Obj_AI_Base unit, InterruptableSpell spell)
         {
             if (W.IsReady() &&
                 Vector3.Distance(player.Position, unit.Position) <= -1 + W.Range + W.Width / 2 &&
@@ -216,7 +206,7 @@ namespace Ziggs
         /// <summary>
         /// Comboing
         /// </summary>
-        private static void Combo()
+        static void Combo()
         {
             Console.WriteLine("Combo");
             bool useQ = Q1.IsReady() && menu.SubMenu("combo").Item("UseQ").GetValue<bool>();
@@ -229,10 +219,7 @@ namespace Ziggs
             Obj_AI_Hero targetR = SimpleTs.GetTarget(R.Range, SimpleTs.DamageType.Magical);
             if (targetW.IsValid && CalculateDamage(targetW) > targetW.Health)
             {
-                if (igniteCheck)
-                {
-                    player.Spellbook.CastSpell(player.GetSpellSlot("SummonerDot"), targetW);
-                }
+                if (IgniteSlot != SpellSlot.Unknown && player.Spellbook.CanUseSpell(IgniteSlot) == SpellState.Ready) player.Spellbook.CastSpell(IgniteSlot, targetW);
                 if(DFG.IsReady())
                     DFG.Cast(targetW);
             }
@@ -293,7 +280,7 @@ namespace Ziggs
         /// <summary>
         /// Harass
         /// </summary>
-        private static void Harass()
+        static void Harass()
         {
             Obj_AI_Hero target = SimpleTs.GetTarget(Q3.Range, SimpleTs.DamageType.Magical);
             if (menu.SubMenu("harass").Item("UseQ").GetValue<bool>() && Q1.IsReady())
@@ -305,7 +292,7 @@ namespace Ziggs
         /// <summary>
         /// Farming function
         /// </summary>
-        private static void LaneClear()
+        static void LaneClear()
         {
             //Minions
             List<Obj_AI_Base> minions = MinionManager.GetMinions(player.Position, Q3.Range);
@@ -324,7 +311,7 @@ namespace Ziggs
             //if (false && WPos.MinionsHit >= numToHit) W.Cast(WPos.Position, true);
             if (useE && EPos.MinionsHit >= numToHit) E.Cast(EPos.Position, true);
         }
-        private static void Escape(escapeModes mode)
+        static void Escape(escapeModes mode)
         {
             switch (mode)
             {
@@ -372,7 +359,7 @@ namespace Ziggs
         /// <summary>
         /// Menu creation
         /// </summary>
-        private static void LoadMenu()
+        static void LoadMenu()
         {
             // Initialize the menu
             menu = new Menu("Royal Ziggy", champName, true);
@@ -472,7 +459,7 @@ namespace Ziggs
         /// <param name="direction">Direction of vector(End point)</param>
         /// <param name="distance">Distance</param>
         /// <returns>Vector3</returns>
-        private static Vector3 V3E(Vector3 from, Vector3 direction, float distance)
+        static Vector3 V3E(Vector3 from, Vector3 direction, float distance)
         {
             return (from.To2D() + distance * Vector2.Normalize(direction.To2D() - from.To2D())).To3D();
         }
@@ -482,7 +469,7 @@ namespace Ziggs
         /// <param name="start"></param>
         /// <param name="end"></param>
         /// <returns></returns>
-        private static bool IsPassWall(Vector3 start, Vector3 end)
+        static bool IsPassWall(Vector3 start, Vector3 end)
         {
             double count = Vector3.Distance(start, end);
             for (uint i = 0; i <= count; i += 10)
@@ -497,14 +484,14 @@ namespace Ziggs
         /// </summary>
         /// <param name="pos"></param>
         /// <returns></returns>
-        private static bool IsWall(Vector2 pos)
+        static bool IsWall(Vector2 pos)
         {
             return (NavMesh.GetCollisionFlags(pos.X, pos.Y) == CollisionFlags.Wall || NavMesh.GetCollisionFlags(pos.X, pos.Y) == CollisionFlags.Building);
         }
         /// <summary>
         /// No explanation
         /// </summary>
-        private static void WExploder()
+        static void WExploder()
         {
             if (Wmode != WModes.NONE && wPos != default(Vector3))
             {
@@ -513,7 +500,7 @@ namespace Ziggs
         }
 
         //And it's all stolen too :C
-        private static void CastQ(Obj_AI_Base target)
+        static void CastQ(Obj_AI_Base target)
         {
             PredictionOutput prediction;
 
@@ -588,7 +575,7 @@ namespace Ziggs
             }
         }
 
-        private static bool CheckQCollision(Obj_AI_Base target, Vector3 targetPosition, Vector3 castPosition)
+        static bool CheckQCollision(Obj_AI_Base target, Vector3 targetPosition, Vector3 castPosition)
         {
             var direction = (castPosition.To2D() - ObjectManager.Player.ServerPosition.To2D()).Normalized();
             var firstBouncePosition = castPosition.To2D();
@@ -639,7 +626,7 @@ namespace Ziggs
 
             return true;
         }
-        private static double CalculateDamage(Obj_AI_Hero target, bool notR = false)
+        static double CalculateDamage(Obj_AI_Hero target, bool notR = false)
         {
             double total = 0;
             if (player.Spellbook.CanUseSpell(SpellSlot.Q) == SpellState.Ready) total += player.GetSpellDamage(target, SpellSlot.Q);
