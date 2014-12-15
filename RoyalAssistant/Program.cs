@@ -190,7 +190,7 @@ namespace RoyalAssistant
                 return;
             }
             skype.SendMessage(lastSender, args.Input.Remove(0, 3));
-            Game.PrintChat("<font color='#70DBDB'>Skype - " + (skype.User.DisplayName.Equals("") ? skype.User.FullName : skype.User.DisplayName) + ":</font> <font color='#FFFFFF'>" + args.Input.Remove(0, 3) + "</font>");
+            Game.PrintChat("<font color='#70DBDB'>Skype - " + (skype.User.DisplayName.Equals("") ? (skype.User.FullName.Equals("") ?skype.User.Handle:skype.User.FullName) : skype.User.DisplayName) + ":</font> <font color='#FFFFFF'>" + args.Input.Remove(0, 3) + "</font>");
             args.Process = false;
         }
         static void LoadMenu()
