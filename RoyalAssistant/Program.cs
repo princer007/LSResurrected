@@ -177,7 +177,10 @@ namespace RoyalAssistant
 
         static void MessageStatus(ChatMessage msg, TChatMessageStatus status)
         {
+            msg.Seen = true;
             if (skype.CurrentUserStatus == TUserStatus.cusDoNotDisturb && !menu.Item("skypeShowDND").GetValue<bool>() || !menu.Item("skypeAttach").GetValue<bool>()) return;
+            if (status != TChatMessageStatus.cmsRead)
+                return;
             Game.PrintChat("<font color='#70DBDB'>Skype - " + (msg.Sender.DisplayName == "" ? msg.Sender.FullName : msg.Sender.DisplayName) + ":</font> <font color='#FFFFFF'>" + msg.Body + "</font>");
             lastSender = msg.Sender.Handle;
         }
