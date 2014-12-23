@@ -38,7 +38,7 @@ namespace RoyalAsheHelper
             Game.PrintChat("RoyalAsheHelper loaded!");
         }
 
-        static void AfterAttack(Obj_AI_Base unit, Obj_AI_Base target)
+        static void AfterAttack(AttackableUnit unit, AttackableUnit target)
         {
             if (menu.Item("exploit").GetValue<bool>() && menu.Item("UseQ").GetValue<bool>())
                 foreach (BuffInstance buff in player.Buffs)

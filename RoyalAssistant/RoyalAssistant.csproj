@@ -54,7 +54,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Interop.SKYPE4COMLib">
-      <HintPath>C:\Users\User\Desktop\LeagueSharperino\\System\Interop.SKYPE4COMLib.dll</HintPath>
+      <HintPath>..\..\..\..\Desktop\SkypeBot\bin\Debug\Interop.SKYPE4COMLib.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="LeagueSharp">

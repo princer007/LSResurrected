@@ -57,7 +57,7 @@ namespace RoyalAsheHelper
 
         static void BeforeAttack(LeagueSharp.Common.Orbwalking.BeforeAttackEventArgs args)
         {
-            if (args.Target.IsMinion && menu.Item("aa").GetValue<bool>() && AlliesInRange(800) > 0) args.Process = false;
+            if (args.Target.Type == GameObjectType.obj_AI_Minion && menu.Item("aa").GetValue<bool>() && AlliesInRange(800) > 0) args.Process = false;
         }
 
         static void AntiGapcloser_OnEnemyGapcloser(ActiveGapcloser gapcloser)
