@@ -54,17 +54,17 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Interop.SKYPE4COMLib">
-      <HintPath>.\Interop.SKYPE4COMLib.dll</HintPath>
+      <HintPath>C:\Users\User\Desktop\LeagueSharperino\\System\Interop.SKYPE4COMLib.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="LeagueSharp">
-      <HintPath>C:\Users\User\Desktop\LeagueSharperino\System\LeagueSharp.dll</HintPath>
+      <HintPath>C:\Users\User\Desktop\LeagueSharperino\\System\LeagueSharp.dll</HintPath>
     </Reference>
     <Reference Include="LeagueSharp.Common">
-      <HintPath>C:\Users\User\Desktop\LeagueSharperino\System\LeagueSharp.Common.dll</HintPath>
+      <HintPath>C:\Users\User\Desktop\LeagueSharperino\\System\LeagueSharp.Common.dll</HintPath>
     </Reference>
     <Reference Include="SharpDX">
-      <HintPath>C:\Users\User\Desktop\LeagueSharperino\System\SharpDX.dll</HintPath>
+      <HintPath>C:\Users\User\Desktop\LeagueSharperino\\System\SharpDX.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

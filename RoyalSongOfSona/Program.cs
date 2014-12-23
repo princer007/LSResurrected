@@ -98,7 +98,7 @@ namespace RoyalAsheHelper
         static void Game_OnGameUpdate(EventArgs args)
         {
             if (menu.Item("panic").GetValue<KeyBind>().Active)
-                R.Cast(R.GetPrediction(SimpleTs.GetTarget(R.Range, SimpleTs.DamageType.Magical)).CastPosition, packets);
+                R.Cast(R.GetPrediction(TargetSelector.GetTarget(R.Range, TargetSelector.DamageType.Magical)).CastPosition, packets);
 
             if (menu.Item("cleanse").GetValue<bool>())
                 CCRemove();
@@ -118,8 +118,8 @@ namespace RoyalAsheHelper
             bool useW = W.IsReady() && menu.Item("UseWC").GetValue<bool>();
             bool useE = E.IsReady() && menu.Item("UseEC").GetValue<bool>();
             bool useR = R.IsReady() && menu.Item("UseRC").GetValue<bool>();
-            Obj_AI_Hero targetQ = SimpleTs.GetTarget(Q.Range, SimpleTs.DamageType.Magical);
-            Obj_AI_Hero targetR = SimpleTs.GetTarget(R.Range, SimpleTs.DamageType.Magical);
+            Obj_AI_Hero targetQ = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical);
+            Obj_AI_Hero targetR = TargetSelector.GetTarget(R.Range, TargetSelector.DamageType.Magical);
             foreach (var item in player.InventoryItems)
                 if (item.Id == ItemId.Frost_Queens_Claim && player.Spellbook.CanUseSpell((SpellSlot)item.Slot) == SpellState.Ready)
                     item.UseItem(targetQ);
@@ -131,7 +131,7 @@ namespace RoyalAsheHelper
                 UseWSmart(menu.Item("healC").GetValue<Slider>().Value, menu.Item("healN").GetValue<Slider>().Value);
 
             if (useE)
-                UseESmart(SimpleTs.GetTarget(1700, SimpleTs.DamageType.Magical));
+                UseESmart(TargetSelector.GetTarget(1700, TargetSelector.DamageType.Magical));
             if (useR && targetR != null)
                 R.CastIfWillHit(targetR, menu.Item("RN").GetValue<Slider>().Value, packets);
         }
@@ -140,7 +140,7 @@ namespace RoyalAsheHelper
         {
             bool useQ = Q.IsReady() && menu.Item("UseQH").GetValue<bool>();
             bool useW = W.IsReady() && menu.Item("UseWH").GetValue<bool>();
-            Obj_AI_Hero targetQ = SimpleTs.GetTarget(Q.Range, SimpleTs.DamageType.Magical);
+            Obj_AI_Hero targetQ = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical);
             if (useQ && targetQ != null && (Utility.CountEnemysInRange((int)Q.Range) > 1 || !menu.Item("UseQHF").GetValue<bool>()))
                 Q.Cast();
 
@@ -226,7 +226,7 @@ namespace RoyalAsheHelper
 
             // Target selector
             Menu targetSelector = new Menu("Target Selector", "ts");
-            SimpleTs.AddToMenu(targetSelector);
+            TargetSelector.AddToMenu(targetSelector);
             menu.AddSubMenu(targetSelector);
 
             // Orbwalker

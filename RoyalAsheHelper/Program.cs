@@ -96,8 +96,8 @@ namespace RoyalAsheHelper
         {
             bool useW = W.IsReady() && menu.SubMenu("combo").Item("UseW").GetValue<bool>();
             bool useR = R.IsReady() && menu.SubMenu("combo").Item("UseR").GetValue<bool>();
-            Obj_AI_Hero targetW = SimpleTs.GetTarget(W.Range, SimpleTs.DamageType.Physical);
-            Obj_AI_Hero targetR = SimpleTs.GetTarget(700, SimpleTs.DamageType.Magical);
+            Obj_AI_Hero targetW = TargetSelector.GetTarget(W.Range, TargetSelector.DamageType.Physical);
+            Obj_AI_Hero targetR = TargetSelector.GetTarget(700, TargetSelector.DamageType.Magical);
             if (useW)
             {
                 W.CastIfHitchanceEquals(targetW, HitChance.Medium);
@@ -111,7 +111,7 @@ namespace RoyalAsheHelper
         static void Harass()
         {
             bool useW = W.IsReady() && menu.SubMenu("harass").Item("UseW").GetValue<bool>();
-            Obj_AI_Hero targetW = SimpleTs.GetTarget(W.Range, SimpleTs.DamageType.Physical);
+            Obj_AI_Hero targetW = TargetSelector.GetTarget(W.Range, TargetSelector.DamageType.Physical);
             if (useW)
             {
                 W.CastIfHitchanceEquals(targetW, HitChance.Medium);
@@ -150,7 +150,7 @@ namespace RoyalAsheHelper
 
             // Target selector
             Menu targetSelector = new Menu("Target Selector", "ts");
-            SimpleTs.AddToMenu(targetSelector);
+            TargetSelector.AddToMenu(targetSelector);
             menu.AddSubMenu(targetSelector);
 
             // Orbwalker

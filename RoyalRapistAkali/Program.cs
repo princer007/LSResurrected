@@ -164,7 +164,7 @@ namespace RoyalAkali
             if (!Q.IsReady()) return;
             if (mode)
             {
-                Obj_AI_Hero target = SimpleTs.GetTarget(Q.Range, SimpleTs.DamageType.Magical);
+                Obj_AI_Hero target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical);
                 if (!target.IsValidTarget(Q.Range)) return;
                 Q.Cast(target);
             }
@@ -206,7 +206,7 @@ namespace RoyalAkali
             if (!E.IsReady()) return;
             if (mode)
             {
-                Obj_AI_Hero target = SimpleTs.GetTarget(E.Range, SimpleTs.DamageType.Magical);
+                Obj_AI_Hero target = TargetSelector.GetTarget(E.Range, TargetSelector.DamageType.Magical);
                 if (target == null || !target.IsValidTarget(E.Range)) return;
                 if (hasBuff(target, "AkaliMota") && !E.IsReady() && Orbwalking.GetRealAutoAttackRange(player) >= player.Distance(target))
                     orbwalker.ForceTarget(target);
@@ -226,7 +226,7 @@ namespace RoyalAkali
 
         static void RapeTime()
         {
-            Obj_AI_Hero possibleVictim = SimpleTs.GetTarget(R.Range * 2 + Orbwalking.GetRealAutoAttackRange(player), SimpleTs.DamageType.Magical);
+            Obj_AI_Hero possibleVictim = TargetSelector.GetTarget(R.Range * 2 + Orbwalking.GetRealAutoAttackRange(player), TargetSelector.DamageType.Magical);
             try
             {
                 if (rektmate.IsDead || Game.Time - assignTime > 1.5)
@@ -266,7 +266,7 @@ namespace RoyalAkali
                     CastW();
                 if (menu.SubMenu("combo").Item("useR").GetValue<bool>())
                 {
-                    Obj_AI_Hero target = SimpleTs.GetTarget(R.Range, SimpleTs.DamageType.Magical);
+                    Obj_AI_Hero target = TargetSelector.GetTarget(R.Range, TargetSelector.DamageType.Magical);
                     if ((target.IsValidTarget(R.Range) && target.Distance(player) > Orbwalking.GetRealAutoAttackRange(player)) || R.IsKillable(target))
                         R.Cast(target, packetCast);
                 }
@@ -452,7 +452,7 @@ namespace RoyalAkali
             if (mode)
             {
                 Menu targetSelector = new Menu("Target Selector", "ts");
-                SimpleTs.AddToMenu(targetSelector);
+                TargetSelector.AddToMenu(targetSelector);
                 menu.AddSubMenu(targetSelector);
             }
 

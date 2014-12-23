@@ -213,10 +213,10 @@ namespace Ziggs
             bool useW =  W.IsReady() && menu.SubMenu("combo").Item("UseW").GetValue<bool>();
             bool useE =  E.IsReady() && menu.SubMenu("combo").Item("UseE").GetValue<bool>();
             bool useR =  R.IsReady() && (menu.SubMenu("combo").Item("UseR").GetValue<bool>() || menu.SubMenu("ulti").Item("forceR").GetValue<KeyBind>().Active);
-            Obj_AI_Hero targetQ = SimpleTs.GetTarget(Q3.Range, SimpleTs.DamageType.Magical);
-            Obj_AI_Hero targetW = SimpleTs.GetTarget(W.Range, SimpleTs.DamageType.Magical);
-            Obj_AI_Hero targetE = SimpleTs.GetTarget(E.Range, SimpleTs.DamageType.Magical);
-            Obj_AI_Hero targetR = SimpleTs.GetTarget(R.Range, SimpleTs.DamageType.Magical);
+            Obj_AI_Hero targetQ = TargetSelector.GetTarget(Q3.Range, TargetSelector.DamageType.Magical);
+            Obj_AI_Hero targetW = TargetSelector.GetTarget(W.Range, TargetSelector.DamageType.Magical);
+            Obj_AI_Hero targetE = TargetSelector.GetTarget(E.Range, TargetSelector.DamageType.Magical);
+            Obj_AI_Hero targetR = TargetSelector.GetTarget(R.Range, TargetSelector.DamageType.Magical);
             if (targetW.IsValid && CalculateDamage(targetW) > targetW.Health)
             {
                 if (IgniteSlot != SpellSlot.Unknown && player.Spellbook.CanUseSpell(IgniteSlot) == SpellState.Ready) player.Spellbook.CastSpell(IgniteSlot, targetW);
@@ -282,10 +282,10 @@ namespace Ziggs
         /// </summary>
         static void Harass()
         {
-            Obj_AI_Hero target = SimpleTs.GetTarget(Q3.Range, SimpleTs.DamageType.Magical);
+            Obj_AI_Hero target = TargetSelector.GetTarget(Q3.Range, TargetSelector.DamageType.Magical);
             if (menu.SubMenu("harass").Item("UseQ").GetValue<bool>() && Q1.IsReady())
                 CastQ(target);
-            target = SimpleTs.GetTarget(E.Range, SimpleTs.DamageType.Magical);
+            target = TargetSelector.GetTarget(E.Range, TargetSelector.DamageType.Magical);
             if (menu.SubMenu("harass").Item("UseE").GetValue<bool>() && E.IsReady())
                 E.Cast(target);
         }
@@ -366,7 +366,7 @@ namespace Ziggs
 
             // Target selector
             Menu targetSelector = new Menu("Target Selector", "ts");
-            SimpleTs.AddToMenu(targetSelector);
+            TargetSelector.AddToMenu(targetSelector);
             menu.AddSubMenu(targetSelector);
 
             // Orbwalker
