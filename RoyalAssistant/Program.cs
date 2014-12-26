@@ -186,7 +186,7 @@ namespace RoyalAssistant
         }
         static void OnGameInput(GameInputEventArgs args)
         {
-            if (!menu.Item("skypeAttach").GetValue<bool>() || !args.Input.StartsWith("/s")) return;
+            if (!menu.Item("skypeAttach").GetValue<bool>() || !args.Input.StartsWith("/s ")) return;
             if (lastSender.Equals(""))
             {
                 Game.PrintChat("<font color='#70DBDB'>Skype - Error:</font> <font color='#FFFFFF'>Can't answer, no sender</font>");
