@@ -78,7 +78,7 @@ namespace RoyalAsheHelper
             {
                 if (!menu.Item("exhaust").GetValue<bool>()) return;
 				if(unit.Distance(player.Position) > 600) return;
-                if (player.GetSpellSlot("SummonerExhaust") != null && player.Spellbook.CanUseSpell(player.GetSpellSlot("SummonerExhaust")) == SpellState.Ready)
+                if (player.GetSpellSlot("SummonerExhaust") != SpellSlot.Unknown && player.Spellbook.CanUseSpell(player.GetSpellSlot("SummonerExhaust")) == SpellState.Ready)
                     player.Spellbook.CastSpell(player.GetSpellSlot("SummonerExhaust"), unit);
                 if ((W.IsReady() && GetPassiveCount() == 2) || (Utility.HasBuff(player, "sonapassiveattack") && player.LastCastedSpellName() == "SonaW") || (Utility.HasBuff(player, "sonapassiveattack") && W.IsReady()))
                 {
@@ -122,9 +122,9 @@ namespace RoyalAsheHelper
             Obj_AI_Hero targetR = TargetSelector.GetTarget(R.Range, TargetSelector.DamageType.Magical);
             foreach (var item in player.InventoryItems)
                 if (item.Id == ItemId.Frost_Queens_Claim && player.Spellbook.CanUseSpell((SpellSlot)item.Slot) == SpellState.Ready)
-                    item.UseItem(targetQ);
+                    player.Spellbook.CastSpell(item.SpellSlot, targetQ);
 
-            if (useQ && targetQ != null && targetQ.Distance(player) < menu.Item("QRange").GetValue<Slider>().Value)
+            if (useQ && targetQ != null && Vector3.Distance(player.Position, targetQ.Position) < menu.Item("QRange").GetValue<Slider>().Value)
                 Q.Cast();
 
             if (useW)
@@ -192,7 +192,7 @@ namespace RoyalAsheHelper
             float lastHealth = 9000f;
             Obj_AI_Hero temp = new Obj_AI_Hero();
             foreach (Obj_AI_Hero hero in ObjectManager.Get<Obj_AI_Hero>())
-                if (hero.IsAlly && !hero.IsMe && player.Distance(hero) <= range && hero.Health < lastHealth)
+                if (hero.IsAlly && !hero.IsMe && Vector3.Distance(player.Position, hero.Position) <= range && hero.Health < lastHealth)
                 {
                     lastHealth = hero.Health;
                     temp = hero;
@@ -205,7 +205,7 @@ namespace RoyalAsheHelper
             //The best way to do it it's LINQ...
             //Realization taken from h3h3's Support AIO
             if (!Items.HasItem((int)ItemId.Mikaels_Crucible, player) || !Items.CanUseItem((int)ItemId.Mikaels_Crucible) || Utility.CountEnemysInRange(1000) < 1) return;
-            foreach (var hero in ObjectManager.Get<Obj_AI_Hero>().Where(h => h.IsAlly && !h.IsDead && h.Distance(player) <= 800).OrderByDescending(h => h.FlatPhysicalDamageMod))
+            foreach (var hero in ObjectManager.Get<Obj_AI_Hero>().Where(h => h.IsAlly && !h.IsDead && Vector3.Distance(player.Position, h.Position) <= 800).OrderByDescending(h => h.FlatPhysicalDamageMod))
                 foreach (var buff in CcTypes)
                     if (hero.HasBuffOfType(buff))
                         Items.UseItem((int)ItemId.Mikaels_Crucible, hero);
@@ -215,7 +215,7 @@ namespace RoyalAsheHelper
         {
             int count = 0;
             foreach(Obj_AI_Hero hero in ObjectManager.Get<Obj_AI_Hero>())
-                if(hero.IsAlly && !hero.IsMe && player.Distance(hero) <= range) count++;
+                if (hero.IsAlly && !hero.IsMe && Vector3.Distance(player.Position, hero.Position) <= range) count++;
             return count;
         }
                 

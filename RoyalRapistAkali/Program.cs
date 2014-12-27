@@ -89,7 +89,7 @@ namespace RoyalAkali
             orbwalker.SetAttack(true);
             if(menu.Item("RKillsteal").GetValue<bool>())
                 foreach (Obj_AI_Hero enemy in ObjectManager.Get<Obj_AI_Hero>())
-                    if (enemy.IsEnemy && enemy.Distance(player) <= R.Range && player.GetSpellDamage(enemy, SpellSlot.R) > enemy.Health && ultiCount() > 0 && R.IsReady())
+                    if (enemy.IsEnemy && Vector3.Distance(player.Position, enemy.Position) <= R.Range && player.GetSpellDamage(enemy, SpellSlot.R) > enemy.Health && ultiCount() > 0 && R.IsReady())
                         R.CastOnUnit(enemy);
 
             switch (orbwalker.ActiveMode)
@@ -146,15 +146,15 @@ namespace RoyalAkali
                 {
                     case "TrinketSweeperLvl1":
                         if (pd < 800)
-                            item.UseItem(V2E(player.Position, position, 400).To3D());
+                            player.Spellbook.CastSpell(item.SpellSlot, V2E(player.Position, position, 400).To3D());
                         break;
                     case "TrinketSweeperLvl2":
                         if (pd < 1200)
-                            item.UseItem(V2E(player.Position, position, 600).To3D());
+                            player.Spellbook.CastSpell(item.SpellSlot, V2E(player.Position, position, 600).To3D());
                         break;
                     case "TrinketSweeperLvl3":
                         if (pd < 1200)
-                            item.UseItem(V2E(player.Position, position, 600).To3D());
+                            player.Spellbook.CastSpell(item.SpellSlot, V2E(player.Position, position, 600).To3D());
                         break;
                 }
         }
@@ -175,7 +175,7 @@ namespace RoyalAkali
                         MinionManager.GetMinions(player.Position, Q.Range, MinionTypes.All, MinionTeam.Enemy,
                             MinionOrderTypes.Health))
                     if (hasBuff(minion, "AkaliMota") &&
-                        Orbwalking.GetRealAutoAttackRange(player) >= player.Distance(minion))
+                        Orbwalking.GetRealAutoAttackRange(player) >= Vector3.Distance(player.Position, minion.Position))
                         orbwalker.ForceTarget(minion);
 
                 foreach (
@@ -184,17 +184,17 @@ namespace RoyalAkali
                             MinionOrderTypes.Health))
                     if (
                         HealthPrediction.GetHealthPrediction(minion,
-                            (int) (E.Delay + (minion.Distance(player)/E.Speed))*1000) <
+                            (int) (E.Delay + (Vector3.Distance(player.Position, minion.Position)/E.Speed))*1000) <
                         player.GetSpellDamage(minion, SpellSlot.Q) &&
                         HealthPrediction.GetHealthPrediction(minion,
-                            (int) (E.Delay + (minion.Distance(player)/E.Speed))*1000) > 0 &&
-                        player.Distance(minion) > Orbwalking.GetRealAutoAttackRange(player))
+                            (int) (E.Delay + (Vector3.Distance(player.Position, minion.Position)/E.Speed))*1000) > 0 &&
+                        Vector3.Distance(player.Position, minion.Position) > Orbwalking.GetRealAutoAttackRange(player))
                         Q.Cast(minion);
 
                 foreach (Obj_AI_Base minion in MinionManager.GetMinions(player.ServerPosition, Q.Range,
                     MinionTypes.All,
                     MinionTeam.Neutral, MinionOrderTypes.MaxHealth))
-                    if (player.Distance(minion) <= Q.Range)
+                    if (Vector3.Distance(player.Position, minion.Position) <= Q.Range)
                         Q.Cast(minion);
 
 
@@ -208,7 +208,7 @@ namespace RoyalAkali
             {
                 Obj_AI_Hero target = TargetSelector.GetTarget(E.Range, TargetSelector.DamageType.Magical);
                 if (target == null || !target.IsValidTarget(E.Range)) return;
-                if (hasBuff(target, "AkaliMota") && !E.IsReady() && Orbwalking.GetRealAutoAttackRange(player) >= player.Distance(target))
+                if (hasBuff(target, "AkaliMota") && !E.IsReady() && Orbwalking.GetRealAutoAttackRange(player) >= Vector3.Distance(player.Position, target.Position))
                     orbwalker.ForceTarget(target);
                 else
                     E.Cast();
@@ -219,7 +219,7 @@ namespace RoyalAkali
                 foreach (Obj_AI_Base minion in MinionManager.GetMinions(player.ServerPosition, Q.Range,
                       MinionTypes.All,
                       MinionTeam.Neutral, MinionOrderTypes.MaxHealth))
-                    if (player.Distance(minion) <= E.Range)
+                    if (Vector3.Distance(player.Position, minion.Position) <= E.Range)
                         E.Cast();
             }
         }
@@ -249,9 +249,9 @@ namespace RoyalAkali
             if (rektmate != default(Obj_AI_Hero))
             {
                 //!(menu.SubMenu("misc").Item("TowerDive").GetValue<Slider>().Value < player.Health/player.MaxHealth && Utility.UnderTurret(rektmate, true)) && 
-                if (player.Distance(rektmate) < R.Range * 2 + Orbwalking.GetRealAutoAttackRange(player) && player.Distance(rektmate) > Q.Range)
+                if (Vector3.Distance(player.Position, rektmate.Position) < R.Range * 2 + Orbwalking.GetRealAutoAttackRange(player) && Vector3.Distance(player.Position, rektmate.Position) > Q.Range)
                     CastR(rektmate.Position);
-                else if (player.Distance(rektmate) < Q.Range)
+                else if (Vector3.Distance(player.Position, rektmate.Position) < Q.Range)
                     RaperinoCasterino(rektmate);
                 else rektmate = default(Obj_AI_Hero);//Target is out of range. Unassign.
             }
@@ -267,7 +267,7 @@ namespace RoyalAkali
                 if (menu.SubMenu("combo").Item("useR").GetValue<bool>())
                 {
                     Obj_AI_Hero target = TargetSelector.GetTarget(R.Range, TargetSelector.DamageType.Magical);
-                    if ((target.IsValidTarget(R.Range) && target.Distance(player) > Orbwalking.GetRealAutoAttackRange(player)) || R.IsKillable(target))
+                    if ((target.IsValidTarget(R.Range) && Vector3.Distance(player.Position, target.Position) > Orbwalking.GetRealAutoAttackRange(player)) || R.IsKillable(target))
                         R.Cast(target, packetCast);
                 }
             }
@@ -281,7 +281,7 @@ namespace RoyalAkali
             //
             byte enemiesAround = 0;
             foreach(Obj_AI_Hero enemy in ObjectManager.Get<Obj_AI_Hero>())
-                if(enemy.IsEnemy && enemy.Distance(player) < 400) enemiesAround++;
+                if(enemy.IsEnemy && Vector3.Distance(player.Position, enemy.Position) < 400) enemiesAround++;
             if (menu.Item("PanicW").GetValue<Slider>().Value > enemiesAround && menu.Item("PanicWN").GetValue<Slider>().Value < (int)(player.Health / player.MaxHealth * 100))
                 return;
             W.Cast(player.Position, packetCast);
@@ -289,24 +289,24 @@ namespace RoyalAkali
 
         static void RaperinoCasterino(Obj_AI_Hero victim)
         {
-            orbwalker.SetAttack(!Q.IsReady() && !E.IsReady() && player.Distance(victim) < 800f);
+            orbwalker.SetAttack(!Q.IsReady() && !E.IsReady() && Vector3.Distance(player.Position, victim.Position) < 800f);
             orbwalker.ForceTarget(victim);
             foreach (var item in player.InventoryItems)
                 switch ((int)item.Id)
                 {
                     case 3144:
-                        if (player.Spellbook.CanUseSpell((SpellSlot)item.Slot) == SpellState.Ready) item.UseItem(victim);
+                        if (player.Spellbook.CanUseSpell((SpellSlot)item.Slot) == SpellState.Ready) player.Spellbook.CastSpell(item.SpellSlot, victim);
                         break;
                     case 3146:
-                        if (player.Spellbook.CanUseSpell((SpellSlot)item.Slot) == SpellState.Ready) item.UseItem(victim);
+                        if (player.Spellbook.CanUseSpell((SpellSlot)item.Slot) == SpellState.Ready) player.Spellbook.CastSpell(item.SpellSlot, victim);
                         break;
                     case 3128:
-                        if (player.Spellbook.CanUseSpell((SpellSlot)item.Slot) == SpellState.Ready) item.UseItem(victim);
+                        if (player.Spellbook.CanUseSpell((SpellSlot)item.Slot) == SpellState.Ready) player.Spellbook.CastSpell(item.SpellSlot, victim);
                         break;
                 }
             if (Q.IsReady() && Q.InRange(victim.Position) && !hasBuff(victim, "AkaliMota")) Q.Cast(victim, packetCast);
             if (E.IsReady() && E.InRange(victim.Position)) E.Cast();
-            if (W.IsReady() && W.InRange(victim.Position) && !(hasBuff(victim, "AkaliMota") && player.Distance(victim) > Orbwalking.GetRealAutoAttackRange(player))) W.Cast(V2E(player.Position, victim.Position, player.Distance(victim) + W.Width * 2 - 20), packetCast);
+            if (W.IsReady() && W.InRange(victim.Position) && !(hasBuff(victim, "AkaliMota") && Vector3.Distance(player.Position, victim.Position) > Orbwalking.GetRealAutoAttackRange(player))) W.Cast(V2E(player.Position, victim.Position, Vector3.Distance(player.Position, victim.Position) + W.Width * 2 - 20), packetCast);
             if (R.IsReady() && R.InRange(victim.Position)) R.Cast(victim, packetCast);
             if (IgniteSlot != SpellSlot.Unknown && player.Spellbook.CanUseSpell(IgniteSlot) == SpellState.Ready) player.Spellbook.CastSpell(IgniteSlot, victim);
         }
