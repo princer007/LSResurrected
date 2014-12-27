@@ -186,15 +186,27 @@ namespace RoyalAssistant
         }
         static void OnGameInput(GameInputEventArgs args)
         {
-            if (!menu.Item("skypeAttach").GetValue<bool>() || !args.Input.StartsWith("/s ")) return;
+			if(args.Input.StartsWith("/s")) 
+			{
+				args.Process = false;
+			}
+			else return;
+            if (!menu.Item("skypeAttach").GetValue<bool>()) 
+			{
+				Game.PrintChat("<font color='#70DBDB'>Skype - is disabled.</font>");
+				return;
+			}
             if (lastSender.Equals(""))
             {
                 Game.PrintChat("<font color='#70DBDB'>Skype - Error:</font> <font color='#FFFFFF'>Can't answer, no sender</font>");
                 return;
             }
-            skype.SendMessage(lastSender, args.Input.Remove(0, 3));
-            Game.PrintChat("<font color='#70DBDB'>Skype - " + (skype.User.DisplayName.Equals("") ? (skype.User.FullName.Equals("") ?skype.User.Handle:skype.User.FullName) : skype.User.DisplayName) + ":</font> <font color='#FFFFFF'>" + args.Input.Remove(0, 3) + "</font>");
-            args.Process = false;
+			try
+			{
+				Game.PrintChat("<font color='#70DBDB'>Skype - " + (skype.CurrentUser.DisplayName.Equals("") ? (skype.CurrentUser.FullName.Equals("") ? skype.CurrentUser.Handle : skype.CurrentUser.FullName) : skype.CurrentUser.DisplayName) + ":</font> <font color='#FFFFFF'>" + args.Input.Remove(0, 3) + "</font>");
+				skype.SendMessage(lastSender, args.Input.Remove(0, 3));
+			}
+			catch (Exception ex) { Game.PrintChat(ex.Message); }
         }
         static void LoadMenu()
         {
