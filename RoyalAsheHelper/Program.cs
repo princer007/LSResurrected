@@ -2,6 +2,7 @@ using System;
 using LeagueSharp;
 using LeagueSharp.Common;
 using SharpDX;
+using Color = System.Drawing.Color;
 
 namespace RoyalAsheHelper
 {
@@ -9,7 +10,7 @@ namespace RoyalAsheHelper
     {
         private static readonly Obj_AI_Hero player = ObjectManager.Player;
         private static readonly string champName = "Ashe";
-        private static Spell Q, W, R;
+        private static Spell Q, W, E, R;
         private static bool hasQ = false;
         private static Orbwalking.Orbwalker SOW;
         private static Menu menu;
@@ -25,6 +26,7 @@ namespace RoyalAsheHelper
             if (player.ChampionName != champName) return;
             Q = new Spell(SpellSlot.Q);
             W = new Spell(SpellSlot.W, 1200);//57.5º - 2000
+            E = new Spell(SpellSlot.E);
             R = new Spell(SpellSlot.R);
             W.SetSkillshot(0.5f, (float)WAngle, 2000f, false, SkillshotType.SkillshotCone);
             R.SetSkillshot(0.3f, 250f, 1600f, false, SkillshotType.SkillshotLine);
@@ -35,6 +37,7 @@ namespace RoyalAsheHelper
             Interrupter.OnPossibleToInterrupt += Interrupter_OnPossibleToInterrupt;
             Orbwalking.AfterAttack += AfterAttack;
             Orbwalking.BeforeAttack += BeforeAttack;
+            Drawing.OnDraw += OnDraw;
             Game.PrintChat("RoyalAsheHelper loaded!");
         }
 
@@ -118,31 +121,28 @@ namespace RoyalAsheHelper
             }
         }
         
-        static void OnSendPacket(GamePacketEventArgs args)
+        static void OnDraw(EventArgs args)
         {
-            if (!menu.SubMenu("combo").Item("UseQ").GetValue<bool>()) return;
-            if (args.PacketData[0] == Packet.C2S.Move.Header && Packet.C2S.Move.Decoded(args.PacketData).SourceNetworkId == player.NetworkId && Packet.C2S.Move.Decoded(args.PacketData).MoveType == 3)
+            var WRange = menu.Item("Wrange").GetValue<Circle>();
+            var ECircle = menu.Item("Ecircle").GetValue<Circle>();
+            var ECircle2 = menu.Item("Ecircle2").GetValue<Circle>();
+
+            if (WRange.Active)
             {
-                bool heroFound;
-                foreach (BuffInstance buff in player.Buffs)
-                    if (buff.Name == "FrostShot") hasQ = true;
-                heroFound = false;
-                foreach (Obj_AI_Hero hero in ObjectManager.Get<Obj_AI_Hero>())
-                    if (hero.NetworkId == Packet.C2S.Move.Decoded(args.PacketData).TargetNetworkId)
-                        heroFound = true;
-                if (heroFound)
-                {
-                   if (!hasQ) Q.Cast();
-                   hasQ = true;
-                }
-                else
-                {
-                    if (hasQ) Q.Cast();
-                    hasQ = false;
-                }
+                Render.Circle.DrawCircle(player.Position, W.Range, WRange.Color);
+                //Utility.DrawCircle(ObjectManager.Player.Position, W.Range, WRange.Color);
+            }
+
+            if (ECircle.Active)
+            {
+                Render.Circle.DrawCircle(player.Position, 2500 + E.Level * 750, ECircle.Color);
+            }
+            if (ECircle2.Active)
+            {
+                Render.Circle.DrawCircle(player.Position, 2500 + E.Level * 750, ECircle2.Color, 1, true);
             }
         }
-        
+
         static void LoadMenu()
         {
             // Initialize the menu
@@ -176,6 +176,11 @@ namespace RoyalAsheHelper
             misc.AddItem(new MenuItem("exploit", "Q exploit").SetValue(false));
             //misc.AddItem(new MenuItem("interruptLevel", "Interrupt only with danger level").SetValue<InterruptableDangerLevel>(InterruptableDangerLevel.Medium));
             misc.AddItem(new MenuItem("antigapcloser", "Anti-Gapscloser").SetValue(true));
+
+            var drawings = new Menu("Drawings", "Drawings");
+            drawings.AddItem(new MenuItem("Wrange", "W Range").SetValue(new Circle(true, Color.Cyan)));
+            drawings.AddItem(new MenuItem("Ecircle", "E Range").SetValue(new Circle(true, Color.ForestGreen)));
+            drawings.AddItem(new MenuItem("Ecircle2", "E Range (minimap)").SetValue(new Circle(true, Color.Cyan)));
 
             // Finalize menu
             menu.AddToMainMenu();

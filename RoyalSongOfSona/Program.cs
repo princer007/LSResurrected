@@ -14,7 +14,7 @@ namespace RoyalAsheHelper
         private static Orbwalking.Orbwalker SOW;
         private static Menu menu;
         private static bool packets { get { return menu.Item("packets").GetValue<bool>(); } }
-        private static List<BuffType> CcTypes = new List<BuffType> { BuffType.Fear, BuffType.Polymorph, BuffType.Snare, BuffType.Stun, BuffType.Suppression, BuffType.Taunt, BuffType.Charm };
+        private static List<BuffType> CcTypes = new List<BuffType> { BuffType.Fear, BuffType.Polymorph, BuffType.Snare, BuffType.Stun, BuffType.Suppression, BuffType.Taunt, BuffType.Charm, BuffType.Blind };
         
         static void Main(string[] args)
         {
@@ -46,13 +46,13 @@ namespace RoyalAsheHelper
         {
             //Hardcoding
             if (menu.Item("DrawQ").GetValue<Circle>().Active)
-                Utility.DrawCircle(player.Position, menu.Item("QRange").GetValue<Slider>().Value, menu.Item("DrawQ").GetValue<Circle>().Color);
+                Render.Circle.DrawCircle(player.Position, menu.Item("QRange").GetValue<Slider>().Value, menu.Item("DrawQ").GetValue<Circle>().Color);
             if (menu.Item("DrawW").GetValue<Circle>().Active)
-                Utility.DrawCircle(player.Position, W.Range, menu.Item("DrawW").GetValue<Circle>().Color);
+                Render.Circle.DrawCircle(player.Position, W.Range, menu.Item("DrawW").GetValue<Circle>().Color);
             if (menu.Item("DrawE").GetValue<Circle>().Active)
-                Utility.DrawCircle(player.Position, E.Range, menu.Item("DrawE").GetValue<Circle>().Color);
+                Render.Circle.DrawCircle(player.Position, E.Range, menu.Item("DrawE").GetValue<Circle>().Color);
             if (menu.Item("DrawR").GetValue<Circle>().Active)
-                Utility.DrawCircle(player.Position, R.Range, menu.Item("DrawR").GetValue<Circle>().Color);
+                Render.Circle.DrawCircle(player.Position, R.Range, menu.Item("DrawR").GetValue<Circle>().Color);
         }
 
         static void BeforeAttack(LeagueSharp.Common.Orbwalking.BeforeAttackEventArgs args)

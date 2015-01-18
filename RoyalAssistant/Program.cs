@@ -225,7 +225,7 @@ namespace RoyalAssistant
 
             menu.AddSubMenu(new Menu("Utilities", "util"));
             menu.SubMenu("util").AddItem(new MenuItem("end", "Quit game on end").SetValue(true));
-            menu.SubMenu("util").AddItem(new MenuItem("delay", "Custom delay to closing LoL").SetValue(new Slider(500, 0, 1500)));
+            menu.SubMenu("util").AddItem(new MenuItem("delay", "Custom delay to closing LoL").SetValue(new Slider(500, 0, 3000)));
             menu.SubMenu("util").AddItem(new MenuItem("ward", "Show \"Buy ward\" reminder").SetValue(true));
             menu.SubMenu("util").AddItem(new MenuItem("center", "^ Place this message on center ^").SetValue(false));
             menu.SubMenu("util").AddItem(new MenuItem("buyward", "Buy ward key").SetValue(new KeyBind('U', KeyBindType.Press)));

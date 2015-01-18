@@ -100,6 +100,7 @@ namespace Ziggs
             Game.OnGameProcessPacket += OnRecievePacket;
             Console.WriteLine("Loaded!");
         }
+
         static void OnRecievePacket(GamePacketEventArgs args)
         {
             if (PacketChannel.S2C == args.Channel && args.PacketData[0] == Packet.S2C.TowerAggro.Header)//Header checks
@@ -111,6 +112,7 @@ namespace Ziggs
                 TUnit_obj.isAggred = true;
             }
         }
+
         static void Game_OnGameUpdate(EventArgs args)
         {
             // Combo
@@ -155,7 +157,7 @@ namespace Ziggs
             {
                 var menuItem = menu.Item(spell.Slot + "range").GetValue<Circle>();
                 if (menuItem.Active)
-                    Utility.DrawCircle(player.Position, spell.Range, menuItem.Color);
+                    Render.Circle.DrawCircle(player.Position, spell.Range, menuItem.Color);
             }
             foreach (Obj_AI_Hero hero in ObjectManager.Get<Obj_AI_Hero>())
             {
@@ -164,11 +166,11 @@ namespace Ziggs
                     foreach(FEnemy enemy in lastTimePinged)
                         if (enemy.NetworkId == hero.NetworkId)
                         {
-                            Drawing.DrawText(Drawing.Width * 0.7f, Drawing.Height * 0.5f, System.Drawing.Color.GreenYellow, "Ult can kill, look at ping on map");
+                            Drawing.DrawText(Drawing.Width * 0.7f, Drawing.Height * 0.5f, System.Drawing.Color.GreenYellow, "Ult can kill");
                             if (enemy.LastAggroTime < Game.Time - 7)
                             {
                                 Console.WriteLine("KS ping executed");
-                                Packet.S2C.Ping.Encoded(new Packet.S2C.Ping.Struct(hero.Position.X, hero.Position.Y, hero.NetworkId, 0, Packet.PingType.Fallback)).Process();
+                                //Packet.S2C.Ping.Encoded(new Packet.S2C.Ping.Struct(hero.Position.X, hero.Position.Y, hero.NetworkId, 0, Packet.PingType.Fallback)).Process();
                                 enemy.LastAggroTime = Game.Time;
                             }
                         }
@@ -264,7 +266,7 @@ namespace Ziggs
             if (useR)//TEST IT!
             {
                 PredictionOutput prediction = R.GetPrediction(targetR);
-                if ((menu.SubMenu("ulti").Item("ultiOnKillable").GetValue<bool>() && (player.GetSpellDamage(targetR, SpellSlot.R, 0) > targetR.Health && !(CalculateDamage(targetR, true) > targetR.Health) && targetR.Distance(player) < W.Range && lastQ+3 < Game.Time) || menu.SubMenu("ulti").Item("forceR").GetValue<KeyBind>().Active))
+                if ((menu.SubMenu("ulti").Item("ultiOnKillable").GetValue<bool>() && (player.GetSpellDamage(targetR, SpellSlot.R, 0) > targetR.Health && !(CalculateDamage(targetR, true) > targetR.Health) && Vector3.Distance(player.Position, targetR.Position) < W.Range && lastQ + 3 < Game.Time) || menu.SubMenu("ulti").Item("forceR").GetValue<KeyBind>().Active))
                     if (prediction.Hitchance >= HitChance.Medium || menu.SubMenu("ulti").Item("forceRPrediction").GetValue<bool>())
                         R.Cast(prediction.CastPosition);
                 if(!menu.SubMenu("ulti").Item("AOE").GetValue<bool>())return;
@@ -322,7 +324,7 @@ namespace Ziggs
                         if (!IsPassWall(player.Position, cursorPos))//Escaping to mouse pos
                         {
                             Vector3 pass = V3E(player.Position, cursorPos, 100);//Point to move closer to the wall (could be better, i know, i'll improve it)
-                            Packet.C2S.Move.Encoded(new Packet.C2S.Move.Struct(pass.X, pass.Y)).Send();
+                            player.IssueOrder(GameObjectOrder.MoveTo, new Vector3(pass.X, pass.Y, 0));
                         }
                         else//Escape through the wall (Flash fail)
                         {
@@ -330,12 +332,12 @@ namespace Ziggs
                             if (IsWall(jumpPred.To2D()) && IsPassWall(player.Position, jumpPred))//Can't we jump over?
                             {
                                 Vector3 pass = V3E(player.Position, jumpPred, 100);//Point to move closer to the wall (could be better, i know, i'll improve it)
-                                Packet.C2S.Move.Encoded(new Packet.C2S.Move.Struct(pass.X, pass.Y)).Send();//Move closer to the wall
+                                player.IssueOrder(GameObjectOrder.MoveTo, new Vector3(pass.X, pass.Y, 0));//Move closer to the wall
                                 return;
                             }
                             else//Yes! We can!
                             {//Stand still
-                                Packet.C2S.Move.Encoded(new Packet.C2S.Move.Struct(player.Position.X, player.Position.Y)).Send();
+                                player.IssueOrder(GameObjectOrder.MoveTo, new Vector3(player.Position.X, player.Position.Y, 0));
                             }
                         }
                         if (!W.IsReady()) return;//Simple!
@@ -347,7 +349,7 @@ namespace Ziggs
                     {
                         Vector3 WPos = V3E(player.Position, TUnit_obj.Position, 40);//Positions
                         Vector3 escapePos = V3E(player.Position, TUnit_obj.Position, -450);
-                        Packet.C2S.Move.Encoded(new Packet.C2S.Move.Struct(escapePos.X, escapePos.Y)).Send();//Move away
+                        player.IssueOrder(GameObjectOrder.MoveTo, new Vector3(escapePos.X, escapePos.Y, 0));//Move away
                         if (!W.IsReady()) return;//Simple!
                         W.Cast(WPos);//Cast W to move away
                         //TUnit_obj.isAggred = false;//Turrent isn't focusing us anymore
@@ -504,21 +506,21 @@ namespace Ziggs
         {
             PredictionOutput prediction;
 
-            if (ObjectManager.Player.Distance(target) < Q1.Range)
+            if (Vector3.Distance(player.Position, target.Position) < Q1.Range)
             {
                 var oldrange = Q1.Range;
                 Q1.Range = Q2.Range;
                 prediction = Q1.GetPrediction(target, true);
                 Q1.Range = oldrange;
             }
-            else if (ObjectManager.Player.Distance(target) < Q2.Range)
+            else if (Vector3.Distance(player.Position, target.Position) < Q2.Range)
             {
                 var oldrange = Q2.Range;
                 Q2.Range = Q3.Range;
                 prediction = Q2.GetPrediction(target, true);
                 Q2.Range = oldrange;
             }
-            else if (ObjectManager.Player.Distance(target) < Q3.Range)
+            else if (Vector3.Distance(player.Position, target.Position) < Q3.Range)
             {
                 prediction = Q3.GetPrediction(target, true);
             }
