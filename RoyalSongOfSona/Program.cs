@@ -69,7 +69,7 @@ namespace RoyalAsheHelper
         static void Interrupter_OnPossibleToInterrupt(Obj_AI_Base unit, InterruptableSpell spell)
         {
             if (!unit.IsValid || unit.IsDead || !unit.IsTargetable || unit.IsStunned) return;
-            if (R.IsReady() && R.InRange(unit.Position) && spell.DangerLevel >= InterruptableDangerLevel.High)
+            if (R.IsReady() && R.IsInRange(unit.Position) && spell.DangerLevel >= InterruptableDangerLevel.High)
             {
                 R.Cast(unit.Position, true);
                 return;

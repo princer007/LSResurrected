@@ -304,10 +304,10 @@ namespace RoyalAkali
                         if (player.Spellbook.CanUseSpell((SpellSlot)item.Slot) == SpellState.Ready) player.Spellbook.CastSpell(item.SpellSlot, victim);
                         break;
                 }
-            if (Q.IsReady() && Q.InRange(victim.Position) && !hasBuff(victim, "AkaliMota")) Q.Cast(victim, packetCast);
-            if (E.IsReady() && E.InRange(victim.Position)) E.Cast();
-            if (W.IsReady() && W.InRange(victim.Position) && !(hasBuff(victim, "AkaliMota") && Vector3.Distance(player.Position, victim.Position) > Orbwalking.GetRealAutoAttackRange(player))) W.Cast(V2E(player.Position, victim.Position, Vector3.Distance(player.Position, victim.Position) + W.Width * 2 - 20), packetCast);
-            if (R.IsReady() && R.InRange(victim.Position)) R.Cast(victim, packetCast);
+            if (Q.IsReady() && Q.IsInRange(victim.Position) && !hasBuff(victim, "AkaliMota")) Q.Cast(victim, packetCast);
+            if (E.IsReady() && E.IsInRange(victim.Position)) E.Cast();
+            if (W.IsReady() && W.IsInRange(victim.Position) && !(hasBuff(victim, "AkaliMota") && Vector3.Distance(player.Position, victim.Position) > Orbwalking.GetRealAutoAttackRange(player))) W.Cast(V2E(player.Position, victim.Position, Vector3.Distance(player.Position, victim.Position) + W.Width * 2 - 20), packetCast);
+            if (R.IsReady() && R.IsInRange(victim.Position)) R.Cast(victim, packetCast);
             if (IgniteSlot != SpellSlot.Unknown && player.Spellbook.CanUseSpell(IgniteSlot) == SpellState.Ready) player.Spellbook.CastSpell(IgniteSlot, victim);
         }
 
@@ -397,7 +397,7 @@ namespace RoyalAkali
                     }
                     else 
                         target = minion;
-            if (R.IsReady() && R.InRange(target.Position) && !target.IsMe)
+            if (R.IsReady() && R.IsInRange(target.Position) && !target.IsMe)
                 if (mouseJump && target.Distance(position) < 200)
                         R.CastOnUnit(target, packetCast);
                 else if (player.Distance(position, true) > target.Distance(position, true))
