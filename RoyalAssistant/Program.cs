@@ -49,7 +49,7 @@ namespace RoyalAssistant
 
         static void OnUpdate(EventArgs args)
         {
-            if (Utility.InShopRange() && menu.Item("ward").GetValue<bool>() && !HasWard())
+            if (Utility.InShop(ObjectManager.Player) && menu.Item("ward").GetValue<bool>() && !HasWard())
                 if (menu.Item("buyward").GetValue<KeyBind>().Active && !bought)
                 {
                     ObjectManager.Player.BuyItem(ItemId.Stealth_Ward);
@@ -60,12 +60,12 @@ namespace RoyalAssistant
         static void OnSpellCast(LeagueSharp.Obj_AI_Base sender, LeagueSharp.GameObjectProcessSpellCastEventArgs args)
         {
             if (args.SData.Name != "NocturneParanoia2" || !menu.Item("noct").GetValue<bool>()) return;
-            Packet.S2C.Ping.Encoded(new Packet.S2C.Ping.Struct(args.Target.Position.X, args.Target.Position.Y, args.Target.NetworkId, 0, Packet.PingType.Danger)).Process();
+            //Packet.S2C.Ping.Encoded(new Packet.S2C.Ping.Struct(args.Target.Position.X, args.Target.Position.Y, args.Target.NetworkId, 0, Packet.PingType.Danger)).Process();
         }
 
         static void Drawing_OnDraw(EventArgs args)
         {
-            if (Utility.InShopRange() && menu.Item("ward").GetValue<bool>() && !HasWard())
+            if (Utility.InShop(ObjectManager.Player) && menu.Item("ward").GetValue<bool>() && !HasWard())
             {
                 Drawing.DrawText(menu.Item("center").GetValue<bool>() ? Drawing.Width / 2 - 40 : 200,
                                   menu.Item("center").GetValue<bool>() ? Drawing.Height / 2 - 60 : 400, GetColor(),

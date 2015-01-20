@@ -141,7 +141,7 @@ namespace RoyalAsheHelper
             bool useQ = Q.IsReady() && menu.Item("UseQH").GetValue<bool>();
             bool useW = W.IsReady() && menu.Item("UseWH").GetValue<bool>();
             Obj_AI_Hero targetQ = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical);
-            if (useQ && targetQ != null && (Utility.CountEnemysInRange((int)Q.Range) > 1 || !menu.Item("UseQHF").GetValue<bool>()))
+            if (useQ && targetQ != null && (Utility.CountEnemiesInRange(player.Position, (int)Q.Range) > 1 || !menu.Item("UseQHF").GetValue<bool>()))
                 Q.Cast();
 
             if (useW)
@@ -204,7 +204,7 @@ namespace RoyalAsheHelper
         {
             //The best way to do it it's LINQ...
             //Realization taken from h3h3's Support AIO
-            if (!Items.HasItem((int)ItemId.Mikaels_Crucible, player) || !Items.CanUseItem((int)ItemId.Mikaels_Crucible) || Utility.CountEnemysInRange(1000) < 1) return;
+            if (!Items.HasItem((int)ItemId.Mikaels_Crucible, player) || !Items.CanUseItem((int)ItemId.Mikaels_Crucible) || Utility.CountEnemiesInRange(player.Position, 1000) < 1) return;
             foreach (var hero in ObjectManager.Get<Obj_AI_Hero>().Where(h => h.IsAlly && !h.IsDead && Vector3.Distance(player.Position, h.Position) <= 800).OrderByDescending(h => h.FlatPhysicalDamageMod))
                 foreach (var buff in CcTypes)
                     if (hero.HasBuffOfType(buff))
