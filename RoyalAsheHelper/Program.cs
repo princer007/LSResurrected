@@ -1,6 +1,7 @@
 using System;
 using LeagueSharp;
 using LeagueSharp.Common;
+using System.Collections.Generic;
 using SharpDX;
 using Color = System.Drawing.Color;
 
@@ -68,20 +69,17 @@ namespace RoyalAsheHelper
         static void AntiGapcloser_OnEnemyGapcloser(ActiveGapcloser gapcloser)
         {
             if (R.IsReady() && menu.SubMenu("misc").Item("antigapcloser").GetValue<bool>() && Vector3.Distance(gapcloser.Sender.Position, player.Position) < 1000)
-            {
                 R.Cast(gapcloser.End, true);
-            }
         }
 
         static void Interrupter_OnPossibleToInterrupt(Obj_AI_Base unit, InterruptableSpell spell)
         {
             if (R.IsReady() &&
-                Vector3.Distance(player.Position, unit.Position) < 1000 &&
+                Vector3.Distance(player.Position, unit.Position) < 1500 &&
                 menu.SubMenu("misc").Item("interrupt").GetValue<bool>() &&
-                spell.DangerLevel >= InterruptableDangerLevel.Medium)
-            {
+                spell.DangerLevel >= InterruptableDangerLevel.Medium &&
+                R.GetPrediction(unit).Hitchance >= HitChance.High)
                 R.Cast(unit.Position, true);
-            }
         }
 
         static void Game_OnGameUpdate(EventArgs args)
@@ -93,8 +91,19 @@ namespace RoyalAsheHelper
             // Harass
             if (SOW.ActiveMode == Orbwalking.OrbwalkingMode.Mixed)
                 Harass();
+
+            // Laneclear
+            if (SOW.ActiveMode == Orbwalking.OrbwalkingMode.LaneClear)
+                Laneclear();
         }
-        
+
+        static void Laneclear()
+        {
+            List<Obj_AI_Base> minions = MinionManager.GetMinions(player.Position, W.Range);
+            MinionManager.FarmLocation WPos = W.GetLineFarmLocation(minions);
+            if (menu.SubMenu("Laneclear").Item("UseW").GetValue<bool>() && WPos.MinionsHit >= 3) W.Cast(WPos.Position, true);
+        }
+
         static void Combo()
         {
             bool useW = W.IsReady() && menu.SubMenu("combo").Item("UseW").GetValue<bool>();
@@ -170,6 +179,10 @@ namespace RoyalAsheHelper
             menu.AddSubMenu(harass);
             harass.AddItem(new MenuItem("UseW", "Use W").SetValue(true));
 
+            Menu laneclear = new Menu("Laneclear", "laneclear");
+            menu.AddSubMenu(laneclear);
+            laneclear.AddItem(new MenuItem("UseW", "Use W for laneclear").SetValue(true));
+
             Menu misc = new Menu("Misc", "misc");
             menu.AddSubMenu(misc);
             misc.AddItem(new MenuItem("interrupt", "Interrupt spells").SetValue(true));
@@ -178,6 +191,7 @@ namespace RoyalAsheHelper
             misc.AddItem(new MenuItem("antigapcloser", "Anti-Gapscloser").SetValue(true));
 
             var drawings = new Menu("Drawings", "Drawings");
+            menu.AddSubMenu(drawings);
             drawings.AddItem(new MenuItem("Wrange", "W Range").SetValue(new Circle(true, Color.Cyan)));
             drawings.AddItem(new MenuItem("Ecircle", "E Range").SetValue(new Circle(true, Color.ForestGreen)));
             drawings.AddItem(new MenuItem("Ecircle2", "E Range (minimap)").SetValue(new Circle(true, Color.Cyan)));
