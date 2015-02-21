@@ -127,7 +127,10 @@ namespace RoyalAssistant
         {
             //Cause utility won't work after game ends ( -_-)
             globalCooldown.Interval = menu.Item("delay").GetValue<Slider>().Value;
-            globalCooldown.Start();
+            if (menu.SubMenu("util").Item("end").GetValue<bool>())
+            {
+                globalCooldown.Start();
+            }
         }
 
         static void OnTimerProcs(object sender, System.Timers.ElapsedEventArgs e)
