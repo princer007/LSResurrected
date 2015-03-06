@@ -10,7 +10,7 @@ using Color = System.Drawing.Color;
 /* 
  * TODO:
  * Objective steal
- * Проверка всех интерраптов и гепклозеров ///ПРОВЕРИТЬ
+ * Проверка всех интерраптов и гепклозеров ///ПРОВЕРИТЬ - Проверено, соу фар :D
  * Игнайт
 */
  
@@ -18,7 +18,6 @@ namespace Ziggs
 {
     class Program
     {
-        static readonly string champName = "Ziggs";                 //Ziggy
         static readonly Obj_AI_Hero player = ObjectManager.Player;  //Player object
         static Spell Q1, Q2, Q3, W, E, R;                           //Spells
         static bool DOTReady, igniteCheck = false;  //Ignite, has ignite, does W exist
@@ -52,7 +51,7 @@ namespace Ziggs
         /// <param name="args"></param>
         static void Game_OnGameLoad(EventArgs args)
         {
-            if (player.ChampionName != champName) return;                   //Champion validation
+            if (player.ChampionName != "Ziggs") return;                   //Champion validation
             //Spell init
             Q1 = new Spell(SpellSlot.Q, 850);
             Q2 = new Spell(SpellSlot.Q, 1125);
@@ -94,7 +93,7 @@ namespace Ziggs
             Game.OnGameUpdate += Game_OnGameUpdate;
             Drawing.OnDraw += Drawing_OnDraw;
             AntiGapcloser.OnEnemyGapcloser += AntiGapcloser_OnEnemyGapcloser;
-            Interrupter.OnPossibleToInterrupt += Interrupter_OnPossibleToInterrupt;
+            Interrupter2.OnInterruptableTarget += Interrupter_OnPossibleToInterrupt;
             GameObject.OnCreate += GO_OnCreate;
             GameObject.OnDelete += GO_OnRemove;
             Game.OnGameProcessPacket += OnRecievePacket;
@@ -159,14 +158,16 @@ namespace Ziggs
                 if (menuItem.Active)
                     Render.Circle.DrawCircle(player.Position, spell.Range, menuItem.Color);
             }
+			string additional = "";
             foreach (Obj_AI_Hero hero in ObjectManager.Get<Obj_AI_Hero>())
             {
                 if (hero.IsEnemy && hero.IsTargetable && player.GetSpellDamage(hero, SpellSlot.R) > hero.Health && !hero.IsDead && R.IsReady())
                 {
+				additional += hero.BaseSkinName + " ";
                     foreach(FEnemy enemy in lastTimePinged)
                         if (enemy.NetworkId == hero.NetworkId)
                         {
-                            Drawing.DrawText(Drawing.Width * 0.7f, Drawing.Height * 0.5f, System.Drawing.Color.GreenYellow, "Ult can kill");
+                            Drawing.DrawText(Drawing.Width * 0.7f, Drawing.Height * 0.5f, System.Drawing.Color.GreenYellow, "Ult can kill - "+additional);
                             if (enemy.LastAggroTime < Game.Time - 7)
                             {
                                 Console.WriteLine("KS ping executed");
@@ -193,12 +194,13 @@ namespace Ziggs
         /// </summary>
         /// <param name="unit">Unit that causing interruptable spell</param>
         /// <param name="spell">Spell that can be interrupted</param>
-        static void Interrupter_OnPossibleToInterrupt(Obj_AI_Base unit, InterruptableSpell spell)
+        static void Interrupter_OnPossibleToInterrupt(Obj_AI_Base unit, Interrupter2.InterruptableTargetEventArgs spell)
         {
+            if (unit.IsAlly) return;
             if (W.IsReady() &&
                 Vector3.Distance(player.Position, unit.Position) <= -1 + W.Range + W.Width / 2 &&
                 menu.SubMenu("misc").Item("interrupt").GetValue<bool>() &&
-                spell.DangerLevel >= InterruptableDangerLevel.Medium)
+                spell.DangerLevel >= Interrupter2.DangerLevel.Medium)
             {
                 Vector3 pos = V3E(player.Position, unit.Position, -1 + Vector3.Distance(player.Position, unit.Position) - W.Width/2);
                 W.Cast(pos, true);
@@ -222,16 +224,17 @@ namespace Ziggs
             if (targetW.IsValid && CalculateDamage(targetW) > targetW.Health)
             {
                 if (IgniteSlot != SpellSlot.Unknown && player.Spellbook.CanUseSpell(IgniteSlot) == SpellState.Ready) player.Spellbook.CastSpell(IgniteSlot, targetW);
-                if(DFG.IsReady())
-                    DFG.Cast(targetW);
+                /*
+				if(DFG.IsReady())
+                    DFG.Cast(targetW);*/
             }
+
             if (useW)
             {
                 PredictionOutput prediction = W.GetPrediction(targetW);
                 if (menu.SubMenu("misc").Item("GETOVERHERE").GetValue<bool>() && (prediction.Hitchance >= HitChance.Medium))
                 {
-                    Vector3 pos = V3E(player.Position, prediction.CastPosition,
-                        Vector3.Distance(player.Position, prediction.CastPosition) + 30);
+                    Vector3 pos = V3E(player.Position, prediction.CastPosition, Vector3.Distance(player.Position, prediction.CastPosition) + 30);
                     if (Vector3.Distance(player.Position, prediction.CastPosition) <=
                         Vector3.Distance(player.Position, pos))
                     {
@@ -265,18 +268,15 @@ namespace Ziggs
             }
             if (useR)//TEST IT!
             {
+                //Honda's way to predict ulti
+            R.Delay = 1900 + 1500 * targetR.Distance(player.Position) / 5300;
                 PredictionOutput prediction = R.GetPrediction(targetR);
                 if ((menu.SubMenu("ulti").Item("ultiOnKillable").GetValue<bool>() && (player.GetSpellDamage(targetR, SpellSlot.R, 0) > targetR.Health && !(CalculateDamage(targetR, true) > targetR.Health) && Vector3.Distance(player.Position, targetR.Position) < W.Range && lastQ + 3 < Game.Time) || menu.SubMenu("ulti").Item("forceR").GetValue<KeyBind>().Active))
                     if (prediction.Hitchance >= HitChance.Medium || menu.SubMenu("ulti").Item("forceRPrediction").GetValue<bool>())
                         R.Cast(prediction.CastPosition);
+				
                 if(!menu.SubMenu("ulti").Item("AOE").GetValue<bool>())return;
-                List<Vector2> enemiesPrediction = new List<Vector2>();
-                foreach (Obj_AI_Hero hero in ObjectManager.Get<Obj_AI_Hero>())
-                    if (hero.Team != player.Team && hero.IsTargetable)
-                        enemiesPrediction.Add(R.GetPrediction(hero).CastPosition.To2D());
-                MinionManager.FarmLocation predictableCastPosition = R.GetCircularFarmLocation(enemiesPrediction);
-                if (predictableCastPosition.MinionsHit >= menu.SubMenu("ulti").Item("enemiesToHit").GetValue<Slider>().Value)
-                    R.Cast(predictableCastPosition.Position);
+				R.CastIfWillHit(targetR, menu.SubMenu("ulti").Item("enemiesToHit").GetValue<Slider>().Value);
             }
         }
         /// <summary>
@@ -364,7 +364,7 @@ namespace Ziggs
         static void LoadMenu()
         {
             // Initialize the menu
-            menu = new Menu("Royal Ziggy", champName, true);
+            menu = new Menu("Royal Ziggy", "Ziggs", true);
 
             // Target selector
             Menu targetSelector = new Menu("Target Selector", "ts");
@@ -389,7 +389,7 @@ namespace Ziggs
             Menu harass = new Menu("Harass", "harass");
             menu.AddSubMenu(harass);
             harass.AddItem(new MenuItem("UseQ", "Use Q").SetValue(true));
-            harass.AddItem(new MenuItem("UseE", "Use E").SetValue(true));
+            harass.AddItem(new MenuItem("UseE", "Use E").SetValue(false));
             harass.AddItem(new MenuItem("Active", "Harass active").SetValue<KeyBind>(new KeyBind('C', KeyBindType.Press)));
 
             // Wave clear
