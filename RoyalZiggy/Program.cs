@@ -161,7 +161,7 @@ namespace Ziggs
 			string additional = "";
             foreach (Obj_AI_Hero hero in ObjectManager.Get<Obj_AI_Hero>())
             {
-                if (hero.IsEnemy && hero.IsTargetable && player.GetSpellDamage(hero, SpellSlot.R) > hero.Health && !hero.IsDead && R.IsReady())
+                if (hero.IsEnemy && hero.IsVisible && hero.IsTargetable && player.GetSpellDamage(hero, SpellSlot.R) > hero.Health && !hero.IsDead && R.IsReady())
                 {
 				additional += hero.BaseSkinName + " ";
                     foreach(FEnemy enemy in lastTimePinged)
