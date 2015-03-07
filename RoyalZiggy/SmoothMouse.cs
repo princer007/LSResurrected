@@ -135,7 +135,7 @@ namespace SmoothMouse
                         else
                         {
                             var firstOnScreen = first.pos.toScreen();
-                            if (firstOnScreen.Distance(posNow, true) <= (back?300*300:35*35))
+                            if (firstOnScreen.Distance(posNow, true) <= 20*20)
                             {
                                 MoveMouse(firstOnScreen);
                                 if (first.click)
@@ -145,7 +145,7 @@ namespace SmoothMouse
                             else
                             {
 
-                                var moveTo = posNow.Extend(firstOnScreen, 20);
+                                var moveTo = posNow.Extend(firstOnScreen, 15);
                                 if (first.jumps.Count > 1 && first.jumps[first.jumps.Count - 2].Distance(moveTo, true) < 15 * 15)
                                 {
                                     queuePos.Dequeue();
@@ -158,7 +158,7 @@ namespace SmoothMouse
                             }
                         }
                     }
-                    Thread.Sleep(1000/150);
+                    Thread.Sleep(1000/200);
                 }
             }).Start();
         }

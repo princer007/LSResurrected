@@ -102,7 +102,7 @@ namespace Ziggs
             Orbwalking.BeforeAttack += (a) =>
                 {
                     if (menu.Item("streamMouseOrb").GetValue<bool>())
-                        SMouse.addMouseEvent(a.Target.Position, true, CRB);
+                        SMouse.addMouseEvent(a.Target.Position, false, CRB);
                 };
             SMouse.start();
             Game.PrintChat("Royal Ziggs loaded!");
@@ -338,9 +338,9 @@ namespace Ziggs
             //Minons count
             int numToHit = menu.SubMenu("waveClear").Item("waveNum").GetValue<Slider>().Value;
             //Using of spells
-            bool useQ = menu.SubMenu("waveClear").Item("UseQ").GetValue<bool>();
+            bool useQ = menu.SubMenu("waveClear").Item("UseQ").GetValue<bool>() && Q1.IsReady();
             //bool useW = menu.SubMenu("waveClear").Item("UseW").GetValue<bool>();
-            bool useE = menu.SubMenu("waveClear").Item("UseE").GetValue<bool>();
+            bool useE = menu.SubMenu("waveClear").Item("UseE").GetValue<bool>() && E.IsReady();
             //Casts
             if (useQ && QPos.MinionsHit >= numToHit)
             {
@@ -470,18 +470,21 @@ namespace Ziggs
             ulti.AddItem(new MenuItem("enemiesToHit", "Enemies to hit").SetValue<Slider>(new Slider(3, 1, 5)));
 
             //Stolen from Honda7's code, cause i'm lazy fuck ( -_-)
-            var dmgAfterComboItem = new MenuItem("DamageAfterCombo", "Draw damage after a rotation").SetValue(new Circle(true, Color.AliceBlue));
+            var dmgAfterComboItem = new MenuItem("DamageAfterCombo", "Draw damage after a rotation").SetValue<Circle>(new Circle(true, Color.Aqua));
             Utility.HpBarDamageIndicator.DamageToUnit += hero => (float)CalculateDamage(hero);
             Utility.HpBarDamageIndicator.Enabled = dmgAfterComboItem.GetValue<Circle>().Active;
             Utility.HpBarDamageIndicator.Color = dmgAfterComboItem.GetValue<Circle>().Color;
             dmgAfterComboItem.ValueChanged += (object sender, OnValueChangeEventArgs eventArgs) =>
-                Utility.HpBarDamageIndicator.Enabled = eventArgs.GetNewValue<bool>();
+                {
+                    Utility.HpBarDamageIndicator.Enabled = eventArgs.GetNewValue<Circle>().Active;
+                    Utility.HpBarDamageIndicator.Color = eventArgs.GetNewValue<Circle>().Color;
+                };
             // Drawings
             Menu drawings = new Menu("Drawings", "drawings");
             menu.AddSubMenu(drawings);
-            drawings.AddItem(new MenuItem("Qrange", "Q Range").SetValue(new Circle(true, Color.FromArgb(150, Color.IndianRed))));
-            drawings.AddItem(new MenuItem("Wrange", "W Range").SetValue(new Circle(true, Color.FromArgb(150, Color.IndianRed))));
-            drawings.AddItem(new MenuItem("Erange", "E Range").SetValue(new Circle(false, Color.FromArgb(150, Color.DarkRed))));
+            drawings.AddItem(new MenuItem("Qrange", "Q Range").SetValue<Circle>(new Circle(true, Color.FromArgb(150, Color.IndianRed))));
+            drawings.AddItem(new MenuItem("Wrange", "W Range").SetValue<Circle>(new Circle(true, Color.FromArgb(150, Color.IndianRed))));
+            drawings.AddItem(new MenuItem("Erange", "E Range").SetValue<Circle>(new Circle(false, Color.FromArgb(150, Color.DarkRed))));
             drawings.AddItem(dmgAfterComboItem);
 
             // Finalize menu
