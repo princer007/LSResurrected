@@ -3,6 +3,7 @@ using LeagueSharp;
 using LeagueSharp.Common;
 using System.Collections.Generic;
 using SharpDX;
+using SMouse = SmoothMouse.SmoothMouse;
 
 using Color = System.Drawing.Color;
 
@@ -30,13 +31,14 @@ namespace Ziggs
         static Vector3 escapePos,  wPos;                      //Position to escape from focus, TurretUnitPosition, Explosive( W ) position
         static TUnit TUnit_obj = new TUnit();
         static string wObj = "ZiggsW_mis_ground.troy";              //Well, W object, as is
-        static Menu menu;                                           //Menu! (@_@ )
+        public static Menu menu;                                           //Menu! (@_@ )
         static Orbwalking.Orbwalker SOW;                            //SOW! (^_^ )
         static List<Spell> SpellList = new List<Spell>();
         static Items.Item DFG = new Items.Item(3128, 750);          //DFG!!!!!!
         static List<FEnemy> lastTimePinged = new List<FEnemy>();
 		static SpellSlot IgniteSlot = player.GetSpellSlot("SummonerDot");
         static float lastQ = 0f;
+        static bool CRB = false;
         
         //(?)List of damage sources to calc
         private static readonly List<Tuple<SpellSlot, int>> mainCombo = new List<Tuple<SpellSlot, int>>();
@@ -97,7 +99,13 @@ namespace Ziggs
             GameObject.OnCreate += GO_OnCreate;
             GameObject.OnDelete += GO_OnRemove;
             Game.OnGameProcessPacket += OnRecievePacket;
-            Console.WriteLine("Loaded!");
+            Orbwalking.BeforeAttack += (a) =>
+                {
+                    if (menu.Item("streamMouseOrb").GetValue<bool>())
+                        SMouse.addMouseEvent(a.Target.Position, true, CRB);
+                };
+            SMouse.start();
+            Game.PrintChat("Royal Ziggs loaded!");
         }
 
         static void OnRecievePacket(GamePacketEventArgs args)
@@ -133,6 +141,7 @@ namespace Ziggs
                     Escape(escapeModes.TOMOUSE);
             if (Game.Time - 8 > TUnit_obj.LastAggroTime) TUnit_obj.isAggred = false;//Ye, my awful english.
             WExploder();
+            CRB = menu.Item("streamMouseCR").GetValue<bool>();
         }
         static void GO_OnCreate(LeagueSharp.GameObject GO, EventArgs args)
         {
@@ -184,6 +193,7 @@ namespace Ziggs
             {
                 //if (gapcloser.SkillType == GapcloserType.Skillshot)
                     W.Cast(gapcloser.End, true); //TODO: разные интеррапты для лисинов\джарванов\леон
+                    SMouse.addMouseEvent(gapcloser.End, false, CRB);
                 //else//Проверить работоспособность на разных гепклозерах
                    // W.Cast(gapcloser.End);//СДЕЛАТЬ, БЛЯДЬ!
                 Wmode = WModes.ANTIGAPCLOSER;
@@ -204,6 +214,7 @@ namespace Ziggs
             {
                 Vector3 pos = V3E(player.Position, unit.Position, -1 + Vector3.Distance(player.Position, unit.Position) - W.Width/2);
                 W.Cast(pos, true);
+                SMouse.addMouseEvent(pos, false, CRB);
                 Wmode = WModes.INTERRUPTOR;
             }
         }
@@ -223,7 +234,9 @@ namespace Ziggs
             Obj_AI_Hero targetR = TargetSelector.GetTarget(R.Range, TargetSelector.DamageType.Magical);
             if (targetW.IsValid && CalculateDamage(targetW) > targetW.Health)
             {
-                if (IgniteSlot != SpellSlot.Unknown && player.Spellbook.CanUseSpell(IgniteSlot) == SpellState.Ready) player.Spellbook.CastSpell(IgniteSlot, targetW);
+                if (IgniteSlot != SpellSlot.Unknown && player.Spellbook.CanUseSpell(IgniteSlot) == SpellState.Ready && menu.Item("UseIgnite").GetValue<bool>())
+                    player.Spellbook.CastSpell(IgniteSlot, targetW);
+                SMouse.addMouseEvent(targetW.Position, false, CRB);
                 /*
 				if(DFG.IsReady())
                     DFG.Cast(targetW);*/
@@ -235,48 +248,62 @@ namespace Ziggs
                 if (menu.SubMenu("misc").Item("GETOVERHERE").GetValue<bool>() && (prediction.Hitchance >= HitChance.Medium))
                 {
                     Vector3 pos = V3E(player.Position, prediction.CastPosition, Vector3.Distance(player.Position, prediction.CastPosition) + 30);
-                    if (Vector3.Distance(player.Position, prediction.CastPosition) <=
-                        Vector3.Distance(player.Position, pos))
+                    if (Vector3.Distance(player.Position, prediction.CastPosition) >=
+                        Vector3.Distance(player.Position, targetW.Position))
                     {
                         W.Cast(pos);
+                        SMouse.addMouseEvent(pos, false, CRB);
                         Wmode = WModes.COMBAT;
                     }
                     else
                     {
-                        pos = V3E(player.Position, prediction.CastPosition,
-                            Vector3.Distance(player.Position, prediction.CastPosition));
-                        W.Cast(pos);
+                        //pos = V3E(player.Position, prediction.CastPosition, Vector3.Distance(player.Position, prediction.CastPosition));
+                        W.Cast(targetW.Position);
+                        SMouse.addMouseEvent(targetW.Position, false, CRB);
                         Wmode = WModes.COMBAT;
                     }
                 }
                 else
                 {
-                    W.Cast(V3E(player.Position, targetW.Position, -10));
+                    Vector3 pos = V3E(player.Position, targetW.Position, -10);
+                    W.Cast(pos);
+                    SMouse.addMouseEvent(pos, false, CRB);
                     Wmode = WModes.COMBAT;
                 }
             }
             if (useQ)
             {
                 CastQ(targetQ);
+                SMouse.addMouseEvent(V3E(player.Position, targetQ.Position, Vector3.Distance(player.Position, targetQ.Position) * 0.5f), false, CRB);
             }
             if (useE)
             {
                 PredictionOutput prediction = E.GetPrediction(targetE);
                 Vector3 pos = V3E(player.Position, prediction.CastPosition,
                         Vector3.Distance(player.Position, prediction.CastPosition) + 30);
-                if (prediction.Hitchance >= HitChance.Medium) E.Cast(pos);
+                if (prediction.Hitchance >= HitChance.Medium)
+                {
+                    E.Cast(pos);
+                    SMouse.addMouseEvent(pos, false, CRB);
+                }
             }
             if (useR)//TEST IT!
             {
                 //Honda's way to predict ulti
-            R.Delay = 1900 + 1500 * targetR.Distance(player.Position) / 5300;
+                R.Delay = 1900 + 1500 * targetR.Distance(player.Position) / 5300;
                 PredictionOutput prediction = R.GetPrediction(targetR);
                 if ((menu.SubMenu("ulti").Item("ultiOnKillable").GetValue<bool>() && (player.GetSpellDamage(targetR, SpellSlot.R, 0) > targetR.Health && !(CalculateDamage(targetR, true) > targetR.Health) && Vector3.Distance(player.Position, targetR.Position) < W.Range && lastQ + 3 < Game.Time) || menu.SubMenu("ulti").Item("forceR").GetValue<KeyBind>().Active))
                     if (prediction.Hitchance >= HitChance.Medium || menu.SubMenu("ulti").Item("forceRPrediction").GetValue<bool>())
+                    {
                         R.Cast(prediction.CastPosition);
-				
-                if(!menu.SubMenu("ulti").Item("AOE").GetValue<bool>())return;
-				R.CastIfWillHit(targetR, menu.SubMenu("ulti").Item("enemiesToHit").GetValue<Slider>().Value);
+                        SMouse.addMouseEvent(prediction.CastPosition, false, CRB);
+                    }
+
+                if (!menu.SubMenu("ulti").Item("AOE").GetValue<bool>()) return;
+                {
+                    if (R.CastIfWillHit(targetR, menu.SubMenu("ulti").Item("enemiesToHit").GetValue<Slider>().Value))
+                        SMouse.addMouseEvent(targetR.Position, false, CRB);
+                }
             }
         }
         /// <summary>
@@ -286,10 +313,16 @@ namespace Ziggs
         {
             Obj_AI_Hero target = TargetSelector.GetTarget(Q3.Range, TargetSelector.DamageType.Magical);
             if (menu.SubMenu("harass").Item("UseQ").GetValue<bool>() && Q1.IsReady())
+            {
                 CastQ(target);
+                SMouse.addMouseEvent(target.Position, false, CRB);
+            }
             target = TargetSelector.GetTarget(E.Range, TargetSelector.DamageType.Magical);
             if (menu.SubMenu("harass").Item("UseE").GetValue<bool>() && E.IsReady())
+            {
                 E.Cast(target);
+                SMouse.addMouseEvent(target.Position, false, CRB);
+            }
         }
         /// <summary>
         /// Farming function
@@ -309,15 +342,23 @@ namespace Ziggs
             //bool useW = menu.SubMenu("waveClear").Item("UseW").GetValue<bool>();
             bool useE = menu.SubMenu("waveClear").Item("UseE").GetValue<bool>();
             //Casts
-            if (useQ && QPos.MinionsHit >= numToHit) Q1.Cast(QPos.Position, true);
+            if (useQ && QPos.MinionsHit >= numToHit)
+            {
+                Q1.Cast(QPos.Position, true);
+                SMouse.addMouseEvent(QPos.Position.To3D(), false, CRB);
+            }
             //if (false && WPos.MinionsHit >= numToHit) W.Cast(WPos.Position, true);
-            if (useE && EPos.MinionsHit >= numToHit) E.Cast(EPos.Position, true);
+            if (useE && EPos.MinionsHit >= numToHit)
+            {
+                E.Cast(EPos.Position, true);
+                SMouse.addMouseEvent(EPos.Position.To3D(), false, CRB);
+            }
         }
         static void Escape(escapeModes mode)
         {
             switch (mode)
             {
-                case escapeModes.TOMOUSE://Escaping to mouse
+                case escapeModes.TOMOUSE: //Escaping to mouse
                     {
                         Vector3 cursorPos = Game.CursorPos;
                         Vector3 pos = V3E(player.Position, cursorPos, (float)-15);
@@ -325,23 +366,26 @@ namespace Ziggs
                         {
                             Vector3 pass = V3E(player.Position, cursorPos, 100);//Point to move closer to the wall (could be better, i know, i'll improve it)
                             player.IssueOrder(GameObjectOrder.MoveTo, new Vector3(pass.X, pass.Y, 0));
+                            SMouse.addMouseEvent(new Vector3(pass.X, pass.Y, 0), true, false);
                         }
-                        else//Escape through the wall (Flash fail)
+                        else //Escape through the wall (Flash fail)
                         {
                             Vector3 jumpPred = V3E(pos, cursorPos, 700);
                             if (IsWall(jumpPred.To2D()) && IsPassWall(player.Position, jumpPred))//Can't we jump over?
                             {
                                 Vector3 pass = V3E(player.Position, jumpPred, 100);//Point to move closer to the wall (could be better, i know, i'll improve it)
                                 player.IssueOrder(GameObjectOrder.MoveTo, new Vector3(pass.X, pass.Y, 0));//Move closer to the wall
+                                SMouse.addMouseEvent(new Vector3(pass.X, pass.Y, 0), true, false);
                                 return;
                             }
-                            else//Yes! We can!
-                            {//Stand still
+                            else //Yes! We can!
+                            { //Stand still
                                 player.IssueOrder(GameObjectOrder.MoveTo, new Vector3(player.Position.X, player.Position.Y, 0));
                             }
                         }
                         if (!W.IsReady()) return;//Simple!
                         W.Cast(pos);//Poof! W cast!
+                        SMouse.addMouseEvent(pos, false, CRB);
                         Wmode = WModes.ESCAPE;//WMode
                     }
                     break;
@@ -352,6 +396,7 @@ namespace Ziggs
                         player.IssueOrder(GameObjectOrder.MoveTo, new Vector3(escapePos.X, escapePos.Y, 0));//Move away
                         if (!W.IsReady()) return;//Simple!
                         W.Cast(WPos);//Cast W to move away
+                        SMouse.addMouseEvent(WPos, false, CRB);
                         //TUnit_obj.isAggred = false;//Turrent isn't focusing us anymore
                         Wmode = WModes.ESCAPE;//???PROFIT
                     }
@@ -383,23 +428,24 @@ namespace Ziggs
             combo.AddItem(new MenuItem("UseW", "Use W").SetValue(true));
             combo.AddItem(new MenuItem("UseE", "Use E").SetValue(true));
             combo.AddItem(new MenuItem("UseR", "Use R").SetValue(true));
-            combo.AddItem(new MenuItem("Active", "Combo active").SetValue<KeyBind>(new KeyBind(32, KeyBindType.Press)));
+            combo.AddItem(new MenuItem("UseIgnite", "Ignite in combo").SetValue(true));
+            combo.AddItem(new MenuItem("Active", "Combo key").SetValue<KeyBind>(new KeyBind(32, KeyBindType.Press)));
 
             // Harass
             Menu harass = new Menu("Harass", "harass");
             menu.AddSubMenu(harass);
             harass.AddItem(new MenuItem("UseQ", "Use Q").SetValue(true));
             harass.AddItem(new MenuItem("UseE", "Use E").SetValue(false));
-            harass.AddItem(new MenuItem("Active", "Harass active").SetValue<KeyBind>(new KeyBind('C', KeyBindType.Press)));
+            harass.AddItem(new MenuItem("Active", "Harass key").SetValue<KeyBind>(new KeyBind('C', KeyBindType.Press)));
 
             // Wave clear
-            Menu waveClear = new Menu("WaveClear", "waveClear");
+            Menu waveClear = new Menu("Lane clear", "waveClear");
             menu.AddSubMenu(waveClear);
             waveClear.AddItem(new MenuItem("UseQ", "Use Q").SetValue(true));
             //waveClear.AddItem(new MenuItem("UseW", "Use W").SetValue(true));
             waveClear.AddItem(new MenuItem("UseE", "Use E").SetValue(true));
             waveClear.AddItem(new MenuItem("waveNum", "Minions to hit").SetValue<Slider>(new Slider(3, 1, 10)));
-            waveClear.AddItem(new MenuItem("Active", "WaveClear active").SetValue<KeyBind>(new KeyBind('V', KeyBindType.Press)));
+            waveClear.AddItem(new MenuItem("Active", "Lane clear key").SetValue<KeyBind>(new KeyBind('V', KeyBindType.Press)));
 
             // Drawings
             Menu misc = new Menu("Misc", "misc");
@@ -408,25 +454,28 @@ namespace Ziggs
             //misc.AddItem(new MenuItem("interruptLevel", "Interrupt only with danger level").SetValue<InterruptableDangerLevel>(InterruptableDangerLevel.Medium));
             misc.AddItem(new MenuItem("antigapcloser", "Anti-Gapscloser").SetValue(true));
             misc.AddItem(new MenuItem("GETOVERHERE", "Try to throw enemy closer in combo").SetValue(true));
-            misc.AddItem(new MenuItem("MAKEMETHEHELLOUTTAHEREMAN", "Smart W").SetValue<KeyBind>(new KeyBind('G', KeyBindType.Press)));
+            misc.AddItem(new MenuItem("streamMouse", "Stream: smooth mouse").SetValue(false));
+            misc.AddItem(new MenuItem("streamMouseCR", "Stream: put cursor back").SetValue(false));
+            misc.AddItem(new MenuItem("streamMouseOrb", "Stream: orbwalk").SetValue(true));
+            misc.AddItem(new MenuItem("MAKEMETHEHELLOUTTAHEREMAN", "Escape: Smart W").SetValue<KeyBind>(new KeyBind('G', KeyBindType.Press)));
 
             //Ultimate settings
             Menu ulti = new Menu("Ultimate", "ulti");
             menu.AddSubMenu(ulti);
-            ulti.AddItem(new MenuItem("forceR", "Force ultimate").SetValue<KeyBind>(new KeyBind('T', KeyBindType.Press)));
+            ulti.AddItem(new MenuItem("123", "            ----There is no auto ulti----"));
+            ulti.AddItem(new MenuItem("forceR", "Force ulti cast(combo mode)").SetValue<KeyBind>(new KeyBind('T', KeyBindType.Press)));
             ulti.AddItem(new MenuItem("forceRPrediction", "Cast with any hitchance").SetValue(true));
             ulti.AddItem(new MenuItem("ultiOnKillable", "Ulti on killable(may KS)").SetValue(true));
             ulti.AddItem(new MenuItem("AOE", "Cast into crowd").SetValue(true));
             ulti.AddItem(new MenuItem("enemiesToHit", "Enemies to hit").SetValue<Slider>(new Slider(3, 1, 5)));
 
             //Stolen from Honda7's code, cause i'm lazy fuck ( -_-)
-            var dmgAfterComboItem = new MenuItem("DamageAfterCombo", "Draw damage after a rotation").SetValue(true);
+            var dmgAfterComboItem = new MenuItem("DamageAfterCombo", "Draw damage after a rotation").SetValue(new Circle(true, Color.AliceBlue));
             Utility.HpBarDamageIndicator.DamageToUnit += hero => (float)CalculateDamage(hero);
-            Utility.HpBarDamageIndicator.Enabled = dmgAfterComboItem.GetValue<bool>();
-            dmgAfterComboItem.ValueChanged += delegate(object sender, OnValueChangeEventArgs eventArgs)
-            {
+            Utility.HpBarDamageIndicator.Enabled = dmgAfterComboItem.GetValue<Circle>().Active;
+            Utility.HpBarDamageIndicator.Color = dmgAfterComboItem.GetValue<Circle>().Color;
+            dmgAfterComboItem.ValueChanged += (object sender, OnValueChangeEventArgs eventArgs) =>
                 Utility.HpBarDamageIndicator.Enabled = eventArgs.GetNewValue<bool>();
-            };
             // Drawings
             Menu drawings = new Menu("Drawings", "drawings");
             menu.AddSubMenu(drawings);
@@ -547,6 +596,7 @@ namespace Ziggs
                     }
 
                     Q1.Cast(p);
+                    SMouse.addMouseEvent(p, false, CRB);
                     lastQ = Game.Time;
                 }
                 else if (ObjectManager.Player.ServerPosition.Distance(prediction.CastPosition) <=
@@ -558,6 +608,7 @@ namespace Ziggs
                     if (!CheckQCollision(target, prediction.UnitPosition, p.To3D()))
                     {
                         Q1.Cast(p.To3D());
+                        SMouse.addMouseEvent(p.To3D(), false, CRB);
                         lastQ = Game.Time;
                     }
                 }
@@ -571,6 +622,7 @@ namespace Ziggs
                     if (!CheckQCollision(target, prediction.UnitPosition, p.To3D()))
                     {
                         Q1.Cast(p.To3D());
+                        SMouse.addMouseEvent(p.To3D(), false, CRB);
                         lastQ = Game.Time;
                     }
                 }
@@ -635,7 +687,7 @@ namespace Ziggs
             if (player.Spellbook.CanUseSpell(SpellSlot.W) == SpellState.Ready) total += player.GetSpellDamage(target, SpellSlot.W);
             if (player.Spellbook.CanUseSpell(SpellSlot.E) == SpellState.Ready) total += player.GetSpellDamage(target, SpellSlot.E);
             if (player.Spellbook.CanUseSpell(SpellSlot.R) == SpellState.Ready && !notR) total += player.GetSpellDamage(target, SpellSlot.R);
-            if (igniteCheck) 
+            if (player.Spellbook.CanUseSpell(IgniteSlot) == SpellState.Ready && menu.Item("UseIgnite").GetValue<bool>()) 
                 total += player.GetSummonerSpellDamage(target, Damage.SummonerSpell.Ignite);
             if (DFG.IsReady()) total += player.GetItemDamage(target, Damage.DamageItems.Dfg);
             return total;
