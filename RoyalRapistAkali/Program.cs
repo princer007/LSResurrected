@@ -67,7 +67,7 @@ namespace RoyalAkali
             UpdateChecks();
             Console.WriteLine("\a \a \a");
             Drawing.OnDraw += OnDraw;
-            Game.OnGameUpdate += OnUpdate;
+            Game.OnUpdate += OnUpdate;
             //Obj_AI_Hero.OnProcessSpellCast += OnCast;
         }
 

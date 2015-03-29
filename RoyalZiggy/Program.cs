@@ -92,13 +92,13 @@ namespace Ziggs
             }
 
             //Additional callbacks
-            Game.OnGameUpdate += Game_OnGameUpdate;
+            Game.OnUpdate += Game_OnGameUpdate;
             Drawing.OnDraw += Drawing_OnDraw;
             AntiGapcloser.OnEnemyGapcloser += AntiGapcloser_OnEnemyGapcloser;
             Interrupter2.OnInterruptableTarget += Interrupter_OnPossibleToInterrupt;
             GameObject.OnCreate += GO_OnCreate;
             GameObject.OnDelete += GO_OnRemove;
-            Game.OnGameProcessPacket += OnRecievePacket;
+            Game.OnProcessPacket += OnRecievePacket;
             Orbwalking.BeforeAttack += (a) =>
                 {
                     if (menu.Item("streamMouseOrb").GetValue<bool>())

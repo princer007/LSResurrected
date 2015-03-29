@@ -34,7 +34,7 @@ namespace RoyalAsheHelper
 
             LoadMenu();
             //Game.OnGameSendPacket += OnSendPacket;
-            Game.OnGameUpdate += Game_OnGameUpdate;
+            Game.OnUpdate += Game_OnGameUpdate;
             //AntiGapcloser.OnEnemyGapcloser += AntiGapcloser_OnEnemyGapcloser;
             Interrupter.OnPossibleToInterrupt += Interrupter_OnPossibleToInterrupt;
             Drawing.OnDraw += OnDraw;

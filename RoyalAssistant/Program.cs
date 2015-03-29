@@ -35,14 +35,14 @@ namespace RoyalAssistant
                 return;
             }
 
-            Game.OnGameUpdate += OnUpdate;
+            Game.OnUpdate += OnUpdate;
             Drawing.OnDraw += Drawing_OnDraw;
-            Game.OnGameEnd += OnGameEnd;
+            Game.OnEnd += OnGameEnd;
             Obj_AI_Hero.OnProcessSpellCast += OnSpellCast;
             globalCooldown.Elapsed += new System.Timers.ElapsedEventHandler(OnTimerProcs);
 
             skype.MessageStatus += new _ISkypeEvents_MessageStatusEventHandler(MessageStatus);
-            Game.OnGameInput += OnGameInput;
+            Game.OnInput += OnGameInput;
 
             Game.PrintChat("RoyalAssistant Loaded!");
         }

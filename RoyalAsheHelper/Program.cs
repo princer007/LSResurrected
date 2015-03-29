@@ -33,7 +33,7 @@ namespace RoyalAsheHelper
             R.SetSkillshot(0.3f, 250f, 1600f, false, SkillshotType.SkillshotLine);
             LoadMenu();
             //Game.OnGameSendPacket += OnSendPacket;
-            Game.OnGameUpdate += Game_OnGameUpdate;
+            Game.OnUpdate += Game_OnGameUpdate;
             AntiGapcloser.OnEnemyGapcloser += AntiGapcloser_OnEnemyGapcloser;
             Interrupter.OnPossibleToInterrupt += Interrupter_OnPossibleToInterrupt;
             Orbwalking.AfterAttack += AfterAttack;
