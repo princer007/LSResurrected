@@ -39,7 +39,6 @@ namespace Ziggs
 		static SpellSlot IgniteSlot = player.GetSpellSlot("SummonerDot");
         static float lastQ = 0f;
         static bool CRB = false;
-        
         //(?)List of damage sources to calc
         private static readonly List<Tuple<SpellSlot, int>> mainCombo = new List<Tuple<SpellSlot, int>>();
 

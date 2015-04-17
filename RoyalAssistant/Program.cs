@@ -25,7 +25,7 @@ namespace RoyalAssistant
         {
             LoadMenu();
 
-            if (Game.MapId != (GameMapId)11)
+            if (Game.MapId != GameMapId.SummonersRift)
             {
                 Game.PrintChat("RoyalAssistant: only SR support implemented!");
                 return;
