@@ -151,10 +151,10 @@ namespace RoyalAsheHelper
         static void UseWSmart(int percent, int count)
         {
             Obj_AI_Hero ally = MostWoundedAllyInRange(W.Range);
-            double wHeal = (10 + 20 * W.Level + .2 * player.FlatMagicDamageMod) * (1 + (1 - (player.Health / player.MaxHealth)) / 2);
+            double wHeal = (10 + 20 * W.Level + .2 * player.FlatMagicDamageMod) * (1 + (player.Health / player.MaxHealth) / 2);
             int allies = AlliesInRange(W.Range);
 
-            if (allies >= count && (ally.Health / ally.MaxHealth) * 100 <= percent && ally != default(Obj_AI_Hero))
+            if (allies >= count && (ally.Health / ally.MaxHealth) * 100 <= percent)
                 W.Cast();
             if (allies < 2 && menu.Item("healmC").GetValue<bool>())
                 if (menu.Item("healmC2").GetValue<bool>() && player.MaxHealth - player.Health > wHeal)
@@ -192,7 +192,7 @@ namespace RoyalAsheHelper
             float lastHealth = 9000f;
             Obj_AI_Hero temp = new Obj_AI_Hero();
             foreach (Obj_AI_Hero hero in ObjectManager.Get<Obj_AI_Hero>())
-                if (hero.IsAlly && !hero.IsMe && Vector3.Distance(player.Position, hero.Position) <= range && hero.Health < lastHealth)
+                if (hero.IsAlly && !hero.IsMe && !hero.IsDead && Vector3.Distance(player.Position, hero.Position) <= range && hero.Health < lastHealth)
                 {
                     lastHealth = hero.Health;
                     temp = hero;
