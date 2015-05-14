@@ -29,7 +29,7 @@ namespace RoyalAsheHelper
             W = new Spell(SpellSlot.W, 1200);//57.5º - 2000
             E = new Spell(SpellSlot.E);
             R = new Spell(SpellSlot.R);
-            W.SetSkillshot(0.5f, (float)WAngle, 2000f, false, SkillshotType.SkillshotCone);
+            W.SetSkillshot(0.5f, (float)WAngle, 2000f, true, SkillshotType.SkillshotCone);
             R.SetSkillshot(0.3f, 250f, 1600f, false, SkillshotType.SkillshotLine);
             LoadMenu();
             //Game.OnGameSendPacket += OnSendPacket;
