@@ -35,34 +35,22 @@ namespace RoyalAsheHelper
             //Game.OnGameSendPacket += OnSendPacket;
             Game.OnUpdate += Game_OnGameUpdate;
             AntiGapcloser.OnEnemyGapcloser += AntiGapcloser_OnEnemyGapcloser;
-            Interrupter.OnPossibleToInterrupt += Interrupter_OnPossibleToInterrupt;
-            Orbwalking.AfterAttack += AfterAttack;
+            Interrupter2.OnInterruptableTarget += Interrupter_OnPossibleToInterrupt;
             Orbwalking.BeforeAttack += BeforeAttack;
             Drawing.OnDraw += OnDraw;
             Game.PrintChat("RoyalAsheHelper loaded!");
         }
 
-        static void AfterAttack(AttackableUnit unit, AttackableUnit target)
-        {
-            if (menu.Item("exploit").GetValue<bool>() && menu.Item("UseQ").GetValue<bool>())
-                foreach (BuffInstance buff in player.Buffs)
-                    if (buff.Name == "FrostShot") Q.Cast();
-        }
-
         static void BeforeAttack(Orbwalking.BeforeAttackEventArgs args)
         {
-            if (menu.Item("UseQ").GetValue<bool>())
+            if (menu.Item("UseQ").GetValue<bool>() && SOW.ActiveMode == Orbwalking.OrbwalkingMode.Combo)
                 if (args.Target.Type == GameObjectType.obj_AI_Hero)
                 {
                     foreach (BuffInstance buff in player.Buffs)
-                        if (buff.Name == "FrostShot") return;
-                    Q.Cast();
-                }
-                else
-                {
-                    foreach (BuffInstance buff in player.Buffs)
-                        if (buff.Name == "FrostShot") Q.Cast();
-                    
+                    {
+                        if (buff.Name == "asheqcastready" && buff.Count == 5)
+                            Q.Cast();
+                    }
                 }
         }
 
@@ -72,14 +60,17 @@ namespace RoyalAsheHelper
                 R.Cast(gapcloser.End, true);
         }
 
-        static void Interrupter_OnPossibleToInterrupt(Obj_AI_Base unit, InterruptableSpell spell)
+        static void Interrupter_OnPossibleToInterrupt(Obj_AI_Hero sender, Interrupter2.InterruptableTargetEventArgs args)
         {
             if (R.IsReady() &&
-                Vector3.Distance(player.Position, unit.Position) < 1500 &&
+                Vector3.Distance(player.Position, sender.Position) < 1500 &&
                 menu.SubMenu("misc").Item("interrupt").GetValue<bool>() &&
-                spell.DangerLevel >= InterruptableDangerLevel.Medium &&
-                R.GetPrediction(unit).Hitchance >= HitChance.High)
-                R.Cast(unit.Position, true);
+                args.DangerLevel >= Interrupter2.DangerLevel.High)
+            {
+                var pred = R.GetPrediction(sender);
+                if(pred.Hitchance >= HitChance.High)
+                    R.Cast(pred.CastPosition, true);
+            }
         }
 
         static void Game_OnGameUpdate(EventArgs args)
@@ -109,7 +100,7 @@ namespace RoyalAsheHelper
             bool useW = W.IsReady() && menu.SubMenu("combo").Item("UseW").GetValue<bool>();
             bool useR = R.IsReady() && menu.SubMenu("combo").Item("UseR").GetValue<bool>();
             Obj_AI_Hero targetW = TargetSelector.GetTarget(W.Range, TargetSelector.DamageType.Physical);
-            Obj_AI_Hero targetR = TargetSelector.GetTarget(700, TargetSelector.DamageType.Magical);
+            Obj_AI_Hero targetR = TargetSelector.GetTarget(800, TargetSelector.DamageType.Magical);
             if (useW)
             {
                 W.CastIfHitchanceEquals(targetW, HitChance.Medium);
@@ -133,8 +124,7 @@ namespace RoyalAsheHelper
         static void OnDraw(EventArgs args)
         {
             var WRange = menu.Item("Wrange").GetValue<Circle>();
-            var ECircle = menu.Item("Ecircle").GetValue<Circle>();
-            var ECircle2 = menu.Item("Ecircle2").GetValue<Circle>();
+            var RCircle = menu.Item("Ecircle").GetValue<Circle>();
 
             if (WRange.Active)
             {
@@ -142,13 +132,9 @@ namespace RoyalAsheHelper
                 //Utility.DrawCircle(ObjectManager.Player.Position, W.Range, WRange.Color);
             }
 
-            if (ECircle.Active)
+            if (RCircle.Active)
             {
-                Render.Circle.DrawCircle(player.Position, 2500 + E.Level * 750, ECircle.Color);
-            }
-            if (ECircle2.Active)
-            {
-                Render.Circle.DrawCircle(player.Position, 2500 + E.Level * 750, ECircle2.Color, 1, true);
+                Render.Circle.DrawCircle(player.Position, 800, RCircle.Color);
             }
         }
 
@@ -179,22 +165,15 @@ namespace RoyalAsheHelper
             menu.AddSubMenu(harass);
             harass.AddItem(new MenuItem("UseW", "Use W").SetValue(true));
 
-            Menu laneclear = new Menu("Laneclear", "laneclear");
-            menu.AddSubMenu(laneclear);
-            laneclear.AddItem(new MenuItem("UseW", "Use W for laneclear").SetValue(true));
-
             Menu misc = new Menu("Misc", "misc");
             menu.AddSubMenu(misc);
             misc.AddItem(new MenuItem("interrupt", "Interrupt spells").SetValue(true));
-            misc.AddItem(new MenuItem("exploit", "Q exploit").SetValue(false));
-            //misc.AddItem(new MenuItem("interruptLevel", "Interrupt only with danger level").SetValue<InterruptableDangerLevel>(InterruptableDangerLevel.Medium));
             misc.AddItem(new MenuItem("antigapcloser", "Anti-Gapscloser").SetValue(true));
 
             var drawings = new Menu("Drawings", "Drawings");
             menu.AddSubMenu(drawings);
             drawings.AddItem(new MenuItem("Wrange", "W Range").SetValue(new Circle(true, Color.Cyan)));
-            drawings.AddItem(new MenuItem("Ecircle", "E Range").SetValue(new Circle(true, Color.ForestGreen)));
-            drawings.AddItem(new MenuItem("Ecircle2", "E Range (minimap)").SetValue(new Circle(true, Color.Cyan)));
+            drawings.AddItem(new MenuItem("Ecircle", "R Range(combo)").SetValue(new Circle(true, Color.ForestGreen)));
 
             // Finalize menu
             menu.AddToMainMenu();
