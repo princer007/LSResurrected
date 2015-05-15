@@ -123,10 +123,23 @@ namespace RoyalAsheHelper
             }
             if (useR)
             {
-                if(targetR.CountAlliesInRange(250) >= menu.Item("RSlider").GetValue<Slider>().Value-1)
-                R.CastIfHitchanceEquals(targetR, HitChance.High);
+                Console.WriteLine(CorrectCountAlliesInRange(targetR, 250));
+                if (CorrectCountAlliesInRange(targetR, 250) >= menu.Item("RSlider").GetValue<Slider>().Value)
+					R.CastIfHitchanceEquals(targetR, HitChance.High);
             }
         }
+		
+		static int CorrectCountAlliesInRange(Obj_AI_Hero unit, int range)
+		{
+            //Yes it SHOULD count unit as an ally
+            int counter = 0;
+            foreach (var cUnit in ObjectManager.Get<Obj_AI_Hero>())
+            {
+                if (cUnit.Team == unit.Team && !cUnit.IsDead && cUnit.Distance3D(unit) <= range)
+                    counter++;
+            }
+            return counter;
+		}
         
         static void Harass()
         {
