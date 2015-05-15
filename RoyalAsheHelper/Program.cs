@@ -30,7 +30,7 @@ namespace RoyalAsheHelper
             E = new Spell(SpellSlot.E);
             R = new Spell(SpellSlot.R, 1000);
             W.SetSkillshot(0.5f, (float)WAngle, 2000f, true, SkillshotType.SkillshotCone);
-            R.SetSkillshot(0.3f, 250f, 1600f, false, SkillshotType.SkillshotLine);
+            R.SetSkillshot(0.3f, 200f, 1600f, false, SkillshotType.SkillshotLine);
             LoadMenu();
             //Game.OnGameSendPacket += OnSendPacket;
             Game.OnUpdate += Game_OnGameUpdate;
@@ -75,6 +75,11 @@ namespace RoyalAsheHelper
 
         static void Game_OnGameUpdate(EventArgs args)
         {
+            if (menu.Item("forceR").GetValue<KeyBind>().Active)
+            {
+                var target = TargetSelector.GetTarget(R.Range, TargetSelector.DamageType.Magical);
+                R.CastIfHitchanceEquals(target, HitChance.High);
+            }
             // Combo
             if (SOW.ActiveMode == Orbwalking.OrbwalkingMode.Combo)
                 Combo();
@@ -173,6 +178,7 @@ namespace RoyalAsheHelper
             combo.AddItem(new MenuItem("UseWE", "W only if out of AA range").SetValue(false));
             combo.AddItem(new MenuItem("UseR", "Use R").SetValue(true));
             combo.AddItem(new MenuItem("RSlider", "Enemies to ult").SetValue(new Slider(3, 1, 5)));
+            combo.AddItem(new MenuItem("forceR", "Insta cast R").SetValue(new KeyBind('T', KeyBindType.Press)));
 
             // Harass
             Menu harass = new Menu("Harass", "harass");
