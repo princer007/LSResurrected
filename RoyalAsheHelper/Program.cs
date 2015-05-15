@@ -28,7 +28,7 @@ namespace RoyalAsheHelper
             Q = new Spell(SpellSlot.Q);
             W = new Spell(SpellSlot.W, 1200);//57.5º - 2000
             E = new Spell(SpellSlot.E);
-            R = new Spell(SpellSlot.R);
+            R = new Spell(SpellSlot.R, 1000);
             W.SetSkillshot(0.5f, (float)WAngle, 2000f, true, SkillshotType.SkillshotCone);
             R.SetSkillshot(0.3f, 250f, 1600f, false, SkillshotType.SkillshotLine);
             LoadMenu();
@@ -43,7 +43,7 @@ namespace RoyalAsheHelper
 
         static void BeforeAttack(Orbwalking.BeforeAttackEventArgs args)
         {
-            if (menu.Item("UseQ").GetValue<bool>() && SOW.ActiveMode == Orbwalking.OrbwalkingMode.Combo)
+            if (menu.Item("UseQc").GetValue<bool>() && SOW.ActiveMode == Orbwalking.OrbwalkingMode.Combo || menu.Item("UseQh").GetValue<bool>() && SOW.ActiveMode == Orbwalking.OrbwalkingMode.Mixed)
                 if (args.Target.Type == GameObjectType.obj_AI_Hero)
                 {
                     foreach (BuffInstance buff in player.Buffs)
@@ -90,9 +90,19 @@ namespace RoyalAsheHelper
 
         static void Laneclear()
         {
-            List<Obj_AI_Base> minions = MinionManager.GetMinions(player.Position, W.Range);
-            MinionManager.FarmLocation WPos = W.GetLineFarmLocation(minions);
-            if (menu.SubMenu("Laneclear").Item("UseW").GetValue<bool>() && WPos.MinionsHit >= 3) W.Cast(WPos.Position, true);
+            List<Obj_AI_Base> minions = MinionManager.GetMinions(600, MinionTypes.All, MinionTeam.Neutral, MinionOrderTypes.MaxHealth);
+            bool useQ = Q.IsReady() && menu.Item("UseQj").GetValue<bool>();
+            bool useW = W.IsReady() && menu.Item("UseWj").GetValue<bool>();
+            foreach(var minion in minions)
+                if (!minion.IsDead)
+                {
+                    if (useW) W.Cast(minion.Position);
+                    foreach (BuffInstance buff in player.Buffs)
+                    {
+                        if (buff.Name == "asheqcastready" && buff.Count == 5 && useQ)
+                            Q.Cast();
+                    }
+                }
         }
 
         static void Combo()
@@ -100,13 +110,15 @@ namespace RoyalAsheHelper
             bool useW = W.IsReady() && menu.SubMenu("combo").Item("UseW").GetValue<bool>();
             bool useR = R.IsReady() && menu.SubMenu("combo").Item("UseR").GetValue<bool>();
             Obj_AI_Hero targetW = TargetSelector.GetTarget(W.Range, TargetSelector.DamageType.Physical);
-            Obj_AI_Hero targetR = TargetSelector.GetTarget(800, TargetSelector.DamageType.Magical);
+            Obj_AI_Hero targetR = TargetSelector.GetTarget(R.Range, TargetSelector.DamageType.Magical);
             if (useW)
             {
-                W.CastIfHitchanceEquals(targetW, HitChance.Medium);
+                if(!menu.SubMenu("combo").Item("UseWE").GetValue<bool>() || targetW.Distance3D(player) > 600)
+                    W.CastIfHitchanceEquals(targetW, HitChance.Medium);
             }
             if (useR)
             {
+                if(targetR.CountAlliesInRange(250) >= menu.Item("RSlider").GetValue<Slider>().Value-1)
                 R.CastIfHitchanceEquals(targetR, HitChance.High);
             }
         }
@@ -134,7 +146,7 @@ namespace RoyalAsheHelper
 
             if (RCircle.Active)
             {
-                Render.Circle.DrawCircle(player.Position, 800, RCircle.Color);
+                Render.Circle.DrawCircle(player.Position, R.Range, RCircle.Color);
             }
         }
 
@@ -156,14 +168,23 @@ namespace RoyalAsheHelper
             // Combo
             Menu combo = new Menu("Combo", "combo");
             menu.AddSubMenu(combo);
-            combo.AddItem(new MenuItem("UseQ", "Use Q").SetValue(true));
-            combo.AddItem(new MenuItem("UseW", "Use W").SetValue(true));
+            combo.AddItem(new MenuItem("UseQc", "Use Q").SetValue(true));
+            combo.AddItem(new MenuItem("UseW", "Use W").SetValue(true)); ;
+            combo.AddItem(new MenuItem("UseWE", "W only if out of AA range").SetValue(false));
             combo.AddItem(new MenuItem("UseR", "Use R").SetValue(true));
+            combo.AddItem(new MenuItem("RSlider", "Enemies to ult").SetValue(new Slider(3, 1, 5)));
 
             // Harass
             Menu harass = new Menu("Harass", "harass");
             menu.AddSubMenu(harass);
+            harass.AddItem(new MenuItem("UseQh", "Use Q").SetValue(true));
             harass.AddItem(new MenuItem("UseW", "Use W").SetValue(true));
+
+            // Harass
+            Menu jc = new Menu("Jungle clear", "jc");
+            menu.AddSubMenu(jc);
+            jc.AddItem(new MenuItem("UseQj", "Use Q").SetValue(true));
+            jc.AddItem(new MenuItem("UseWj", "Use W").SetValue(true));
 
             Menu misc = new Menu("Misc", "misc");
             menu.AddSubMenu(misc);
