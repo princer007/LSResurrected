@@ -26,7 +26,7 @@ namespace RoyalAsheHelper
         {
             if (player.ChampionName != champName) return;
             Q = new Spell(SpellSlot.Q);
-            W = new Spell(SpellSlot.W, 1200);//57.5º - 2000
+            W = new Spell(SpellSlot.W, 1200);//57.5ยบ - 2000
             E = new Spell(SpellSlot.E);
             R = new Spell(SpellSlot.R, 1000);
             W.SetSkillshot(0.5f, (float)WAngle, 2000f, true, SkillshotType.SkillshotCone);
@@ -143,7 +143,7 @@ namespace RoyalAsheHelper
         
         static void Harass()
         {
-            bool useW = W.IsReady() && menu.SubMenu("harass").Item("UseW").GetValue<bool>();
+            bool useW = W.IsReady() && menu.SubMenu("harass").Item("UseWc").GetValue<bool>();
             Obj_AI_Hero targetW = TargetSelector.GetTarget(W.Range, TargetSelector.DamageType.Physical);
             if (useW)
             {
@@ -197,7 +197,7 @@ namespace RoyalAsheHelper
             Menu harass = new Menu("Harass", "harass");
             menu.AddSubMenu(harass);
             harass.AddItem(new MenuItem("UseQh", "Use Q").SetValue(true));
-            harass.AddItem(new MenuItem("UseW", "Use W").SetValue(true));
+            harass.AddItem(new MenuItem("UseWc", "Use W").SetValue(true));
 
             // Harass
             Menu jc = new Menu("Jungle clear", "jc");
