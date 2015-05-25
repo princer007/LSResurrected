@@ -43,7 +43,8 @@ namespace RoyalAsheHelper
 
         static void BeforeAttack(Orbwalking.BeforeAttackEventArgs args)
         {
-            if (menu.Item("UseQc").GetValue<bool>() && SOW.ActiveMode == Orbwalking.OrbwalkingMode.Combo || menu.Item("UseQh").GetValue<bool>() && SOW.ActiveMode == Orbwalking.OrbwalkingMode.Mixed)
+            if (menu.Item("UseQc").GetValue<bool>() && SOW.ActiveMode == Orbwalking.OrbwalkingMode.Combo && (player.Mana / player.MaxMana * 100) >= menu.Item("QmanaC").GetValue<Slider>().Value || 
+                menu.Item("UseQh").GetValue<bool>() && SOW.ActiveMode == Orbwalking.OrbwalkingMode.Mixed)
                 if (args.Target.Type == GameObjectType.obj_AI_Hero)
                 {
                     foreach (BuffInstance buff in player.Buffs)
@@ -95,6 +96,7 @@ namespace RoyalAsheHelper
 
         static void Laneclear()
         {
+            if ((player.Mana / player.MaxMana * 100) < menu.Item("manaJ").GetValue<Slider>().Value) return;
             List<Obj_AI_Base> minions = MinionManager.GetMinions(600, MinionTypes.All, MinionTeam.Neutral, MinionOrderTypes.MaxHealth);
             bool useQ = Q.IsReady() && menu.Item("UseQj").GetValue<bool>();
             bool useW = W.IsReady() && menu.Item("UseWj").GetValue<bool>();
@@ -114,9 +116,10 @@ namespace RoyalAsheHelper
         {
             bool useW = W.IsReady() && menu.SubMenu("combo").Item("UseW").GetValue<bool>();
             bool useR = R.IsReady() && menu.SubMenu("combo").Item("UseR").GetValue<bool>();
+            // >= Config.Item("QmanaC").GetValue<Slider>().Value
             Obj_AI_Hero targetW = TargetSelector.GetTarget(W.Range, TargetSelector.DamageType.Physical);
             Obj_AI_Hero targetR = TargetSelector.GetTarget(R.Range, TargetSelector.DamageType.Magical);
-            if (useW)
+            if (useW && (player.Mana / player.MaxMana * 100) >= menu.Item("WmanaC").GetValue<Slider>().Value)
             {
                 if(!menu.SubMenu("combo").Item("UseWE").GetValue<bool>() || targetW.Distance3D(player) > 600)
                     W.CastIfHitchanceEquals(targetW, HitChance.Medium);
@@ -145,7 +148,7 @@ namespace RoyalAsheHelper
         {
             bool useW = W.IsReady() && menu.SubMenu("harass").Item("UseWc").GetValue<bool>();
             Obj_AI_Hero targetW = TargetSelector.GetTarget(W.Range, TargetSelector.DamageType.Physical);
-            if (useW)
+            if (useW && (player.Mana / player.MaxMana * 100) >= menu.Item("WmanaH").GetValue<Slider>().Value)
             {
                 W.CastIfHitchanceEquals(targetW, HitChance.Medium);
             }
@@ -187,7 +190,9 @@ namespace RoyalAsheHelper
             Menu combo = new Menu("Combo", "combo");
             menu.AddSubMenu(combo);
             combo.AddItem(new MenuItem("UseQc", "Use Q").SetValue(true));
-            combo.AddItem(new MenuItem("UseW", "Use W").SetValue(true)); ;
+            combo.AddItem(new MenuItem("QmanaC", "Min mana % to Q")).SetValue(new Slider(0, 0, 100));
+            combo.AddItem(new MenuItem("UseW", "Use W").SetValue(true));
+            combo.AddItem(new MenuItem("WmanaC", "Min mana % to W")).SetValue(new Slider(15, 0, 100));
             combo.AddItem(new MenuItem("UseWE", "W only if out of AA range").SetValue(false));
             combo.AddItem(new MenuItem("UseR", "Use R").SetValue(true));
             combo.AddItem(new MenuItem("RSlider", "Enemies to ult").SetValue(new Slider(3, 1, 5)));
@@ -198,12 +203,14 @@ namespace RoyalAsheHelper
             menu.AddSubMenu(harass);
             harass.AddItem(new MenuItem("UseQh", "Use Q").SetValue(true));
             harass.AddItem(new MenuItem("UseWc", "Use W").SetValue(true));
+            harass.AddItem(new MenuItem("WmanaH", "Min mana % to W")).SetValue(new Slider(50, 0, 100));
 
             // Harass
             Menu jc = new Menu("Jungle clear", "jc");
             menu.AddSubMenu(jc);
             jc.AddItem(new MenuItem("UseQj", "Use Q").SetValue(true));
             jc.AddItem(new MenuItem("UseWj", "Use W").SetValue(true));
+            jc.AddItem(new MenuItem("manaJ", "Min mana %")).SetValue(new Slider(10, 0, 100));
 
             Menu misc = new Menu("Misc", "misc");
             menu.AddSubMenu(misc);
