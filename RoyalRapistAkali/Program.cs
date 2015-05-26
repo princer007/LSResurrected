@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Net;
 using LeagueSharp;
@@ -97,7 +97,6 @@ namespace RoyalAkali
                 case Orbwalking.OrbwalkingMode.Combo:
                     RapeTime();
                     break;
-
                 case Orbwalking.OrbwalkingMode.Mixed:
                     if (menu.SubMenu("harass").Item("useQ").GetValue<bool>())
                         CastQ(true);
@@ -111,6 +110,13 @@ namespace RoyalAkali
                     if (menu.SubMenu("laneclear").Item("useE").GetValue<bool>())
                         CastE(false);
                     break;
+            }
+            if (menu.Item("autoH").GetValue<KeyBind>().Active && orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.None)
+            {
+                if (menu.SubMenu("harass").Item("useQ").GetValue<bool>())
+                    CastQ(true);
+                if (menu.SubMenu("harass").Item("useE").GetValue<bool>())
+                    CastE(true);
             }
             if (menu.SubMenu("misc").Item("escape").GetValue<KeyBind>().Active) Escape();
         }
@@ -182,12 +188,11 @@ namespace RoyalAkali
                     Obj_AI_Base minion in
                         MinionManager.GetMinions(player.Position, Q.Range, MinionTypes.All, MinionTeam.Enemy,
                             MinionOrderTypes.Health))
-                    if (
-                        HealthPrediction.GetHealthPrediction(minion,
-                            (int) (E.Delay + (Vector3.Distance(player.Position, minion.Position)/E.Speed))*1000) <
+                    if (HealthPrediction.GetHealthPrediction(minion,
+                            (int) ((Vector3.Distance(player.Position, minion.Position)/E.Speed))*1000, (int)E.Delay*1000) <
                         player.GetSpellDamage(minion, SpellSlot.Q) &&
                         HealthPrediction.GetHealthPrediction(minion,
-                            (int) (E.Delay + (Vector3.Distance(player.Position, minion.Position)/E.Speed))*1000) > 0 &&
+                            (int) ((Vector3.Distance(player.Position, minion.Position)/E.Speed))*1000, (int)E.Delay*1000) > 0 &&
                         Vector3.Distance(player.Position, minion.Position) > Orbwalking.GetRealAutoAttackRange(player))
                         Q.Cast(minion);
 
@@ -369,7 +374,6 @@ namespace RoyalAkali
                             result += victim.MaxHealth * 0.15;
                         break;
                 }
-
             return result;
         }
 
@@ -377,7 +381,7 @@ namespace RoyalAkali
         {
             Vector3 cursorPos = Game.CursorPos;
             Vector2 pos = V2E(player.Position, cursorPos, R.Range);
-            Vector2 pass = V2E(player.Position, cursorPos, 120);
+            Vector2 pass = V2E(player.Position, cursorPos, 150);
             player.IssueOrder(GameObjectOrder.MoveTo, new Vector3(pass.X, pass.Y, 0));
             if (menu.SubMenu("misc").Item("RCounter").GetValue<Slider>().Value > ultiCount()) return;
             if (!IsWall(pos) && IsPassWall(player.Position, pos.To3D()) && MinionManager.GetMinions(cursorPos, 300, MinionTypes.All, MinionTeam.NotAlly).Count < 1)
@@ -469,6 +473,7 @@ namespace RoyalAkali
             menu.AddSubMenu(new Menu("Harass Options", "harass"));
             menu.SubMenu("harass").AddItem(new MenuItem("useQ", "Use Q in harass").SetValue(false));
             menu.SubMenu("harass").AddItem(new MenuItem("useE", "Use E in harass").SetValue(true));
+            menu.SubMenu("harass").AddItem(new MenuItem("autoH", "Auto harass").SetValue(new KeyBind('N', KeyBindType.Toggle)));
 
             menu.AddSubMenu(new Menu("Lane Clear/Farm", "laneclear"));
             menu.SubMenu("laneclear").AddItem(new MenuItem("useQ", "Use Q for lasthit").SetValue(true));
