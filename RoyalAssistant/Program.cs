@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using LeagueSharp;
 using LeagueSharp.Common;
 using System.Collections.Generic;
@@ -53,7 +53,7 @@ namespace RoyalAssistant
         static void OnSpellCast(LeagueSharp.Obj_AI_Base sender, LeagueSharp.GameObjectProcessSpellCastEventArgs args)
         {
             if (args.SData.Name != "NocturneParanoia2" || !menu.Item("noct").GetValue<bool>()) return;
-            //Packet.S2C.Ping.Encoded(new Packet.S2C.Ping.Struct(args.Target.Position.X, args.Target.Position.Y, args.Target.NetworkId, 0, Packet.PingType.Danger)).Process();
+                Packet.S2C.Ping.Encoded(new Packet.S2C.Ping.Struct(args.Target.Position.X, args.Target.Position.Y, 0, 0, Packet.PingType.Danger)).Process();
         }
 
         static void Drawing_OnDraw(EventArgs args)
