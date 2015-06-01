@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using LeagueSharp;
 using LeagueSharp.Common;
 using System.Collections.Generic;
@@ -264,7 +264,7 @@ namespace Ziggs
                 }
                 else
                 {
-                    Vector3 pos = V3E(player.Position, targetW.Position, -10);
+                    Vector3 pos = V3E(player.Position, targetW.Position, Vector3.Distance(player.Position, prediction.CastPosition) - 10);
                     W.Cast(pos);
                     SMouse.addMouseEvent(pos, false, CRB);
                     Wmode = WModes.COMBAT;
